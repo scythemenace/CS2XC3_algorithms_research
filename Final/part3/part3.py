@@ -233,12 +233,17 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     fig.tight_layout()
 
     #plt.show()
-    plt.savefig('performance_comparison.png', bbox_inches='tight')
+    plt.savefig('performance_comparison2.png', bbox_inches='tight')
     
 station_pairs = [
     (1, 234),  # Short distance
     (10, 150),  # Medium distance
     (50, 200),  # Long distance
+    (11, 212),  # Same Line, Short Distance
+    (13, 301),  # Same Line, Long Distance
+    (11, 87),   # Different Lines, No Transfers
+    (3, 295),   # Different Lines, Multiple Transfers
+
 ]
 
 # Collect data
