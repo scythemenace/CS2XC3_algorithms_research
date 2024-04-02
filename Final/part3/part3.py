@@ -1,10 +1,4 @@
 
-import csv
-from math import radians, cos, sin, sqrt, atan2
-import time
-import matplotlib.pyplot as plt
-
-
 class PriorityQueue:
     def __init__(self):
         self.elements = []
