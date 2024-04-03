@@ -61,23 +61,38 @@ def dijkstra(graph, start, end):
     return distance[end], path
 
 
-def haversine(coord1, coord2):
-    R = 6371000  # Radius of the Earth in meters
+def euclidean_distance(coord1, coord2):
+    """
+    Calculate the Euclidean distance between two points in a plane.
+    
+    Parameters:
+    - coord1: Tuple containing (latitude, longitude) of the first point.
+    - coord2: Tuple containing (latitude, longitude) of the second point.
+    
+    Returns:
+    - The Euclidean distance between the two points.
+    """
     lat1, lon1 = coord1
     lat2, lon2 = coord2
-
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = R * c
+    
+    # Convert latitudes and longitudes from degrees to radians
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    
+    # Calculate differences
+    delta_lat = lat2 - lat1
+    delta_lon = lon2 - lon1
+    
+    # Simplify: Treat these differences as Cartesian distances
+    # Note: This is a rough approximation and works better for short distances
+    distance = sqrt(delta_lat**2 + delta_lon**2)
+    
     return distance
+
 
 def heuristic(station_id, destination_id):
     station_coord = (stations[station_id]['latitude'], stations[station_id]['longitude'])
     destination_coord = (stations[destination_id]['latitude'], stations[destination_id]['longitude'])
-    return haversine(station_coord, destination_coord)
+    return euclidean_distance(station_coord, destination_coord)
 
 def A_Star(graph, source, destination, heuristic):
     open_set = PriorityQueue()
@@ -233,7 +248,7 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     fig.tight_layout()
 
     #plt.show()
-    plt.savefig('performance_comparison2.png', bbox_inches='tight')
+    plt.savefig('performance_comparison1.png', bbox_inches='tight')
     
 station_pairs = [
     (1, 234),  # Short distance
