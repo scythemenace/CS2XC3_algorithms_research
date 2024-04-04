@@ -1,3 +1,5 @@
+import time
+
 def dijkstra(graph, source, k):
     dist = {node: float('inf') for node in graph}
     dist[source] = 0
@@ -32,6 +34,26 @@ def dijkstra(graph, source, k):
 
     return dist, path
 
+def bellman_ford(graph, source, k):
+    dist = {node: float('inf') for node in graph}
+    dist[source] = 0
+    path = {node: [] for node in graph}
+    path[source] = [source]
+    relaxations = {node: 0 for node in graph}
+
+    for _ in range(len(graph) - 1):
+        for node in graph:
+            for neighbor, weight in graph[node].items():
+                if relaxations[node] < k:
+                    new_distance = dist[node] + weight
+                    if new_distance < dist[neighbor]:
+                        dist[neighbor] = new_distance
+                        path[neighbor] = path[node] + [neighbor]
+                        relaxations[neighbor] += 1
+
+    return dist, path
+
+
 graph = {
     0: {1: 4, 7: 8},
     1: {0: 4, 2: 8, 7: 11},
@@ -47,6 +69,15 @@ graph = {
 # Test the function
 source = 0
 k = 2
+st = time.time()
 distances, paths = dijkstra(graph, source, k)
+end = time.time()
+print("Time1:", end - st)
+st = time.time()
+distances_bf, paths_bf = bellman_ford(graph, source, k)
+end = time.time()
+print("Time2:", end - st)
 print("Distances:", distances)
 print("Paths:", paths)
+print("Distances BF:", distances_bf)
+print("Paths BF:", paths_bf)
