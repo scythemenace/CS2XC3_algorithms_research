@@ -14,10 +14,12 @@ class PriorityQueue:
         return self.elements.pop()[1]  
 
 def A_Star(graph, source, destination, heuristic):
+
+
     open_list = PriorityQueue()
     open_list.put(source, 0 + heuristic[source])
     predecessors = {source: None}
-    costs = {source: 0}  # Cost from start to node
+    costs = {source: 0}
 
     while not open_list.is_empty():
         current = open_list.get()
@@ -33,30 +35,20 @@ def A_Star(graph, source, destination, heuristic):
                 open_list.put(neighbor, priority)
                 predecessors[neighbor] = current
 
-    # Exclude the source node from the predecessors dictionary before returning
-    filtered_predecessors = {key: value for key, value in predecessors.items() if key != source}
-    
     path = reconstruct_path(predecessors, source, destination)
-    
-    # If no path is found, return an empty list for the path and None for the cost.
-    if not path:  
-        return filtered_predecessors, path, None
-    
-    return filtered_predecessors, path
+    if not path:
+        return predecessors, path, "Destination not reachable"
 
+    return predecessors, path, costs.get(destination, "Destination not reachable")
 def reconstruct_path(predecessors, start, end):
-    
-    if end not in predecessors:
-        return []  # Or return "Path not found" or similar message
-    
-    path = []
-    while end is not None:
-        path.append(end)
-        end = predecessors.get(end)  # Use .get() to avoid KeyError if end is not in predecessors
-    path.reverse()
-    return path # Return the path and a flag indicating success
-
-
+        if end not in predecessors:
+            return []  # Path not found
+        path = []
+        while end is not None:
+            path.append(end)
+            end = predecessors.get(end)
+        path.reverse()
+        return path
 
 graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
 source = 0
@@ -185,3 +177,41 @@ heuristic = {0: 120, 1: 80, 2: 50, 3: 0}
 expected = ([0, 2, 3], 190)
 result = A_Star(graph, source, destination, heuristic)
 print(result)
+
+test_cases = [
+    {
+        "graph": {'A': {'B': 1}, 'B': {'C': 1}, 'C': {}},
+        "heuristic": {'A': 2, 'B': 1, 'C': 0},
+        "source": 'A',
+        "destination": 'C'
+    },
+    {
+        "graph": {'A': {'B': 2}, 'B': {'C': 2, 'D': 1}, 'C': {'B': 2, 'E': 3}, 'D': {'E': 1}, 'E': {}},
+        "heuristic": {'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 0},
+        "source": 'A',
+        "destination": 'E'
+    },
+    {
+        "graph": {'A': {'B': 4, 'C': 1}, 'B': {'D': 1}, 'C': {'B': 2, 'D': 5}, 'D': {}},
+        "heuristic": {'A': 3, 'B': 2, 'C': 2, 'D': 0},
+        "source": 'A',
+        "destination": 'D'
+    },
+    {
+        "graph": {'A': {'B': 3}, 'B': {'C': 4}, 'C': {}, 'X': {}},
+        "heuristic": {'A': 6, 'B': 4, 'C': 0, 'X': 0},
+        "source": 'A',
+        "destination": 'X'
+    },
+    {
+        "graph": {'A': {'B': 2, 'C': -1}, 'B': {'D': 2}, 'C': {'B': -2, 'D': 1}, 'D': {}},
+        "heuristic": {'A': 3, 'B': 2, 'C': 1, 'D': 0},
+        "source": 'A',
+        "destination": 'D'
+    },
+]
+
+# Running and printing the test cases
+for i, test in enumerate(test_cases, 1):
+    predecessors, path, cost = A_Star(test["graph"], test["source"], test["destination"], test["heuristic"])
+    print(f"Test Case {i}: Path - {path}, Cost - {cost}")
