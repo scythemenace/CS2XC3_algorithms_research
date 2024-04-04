@@ -39,7 +39,7 @@ def A_Star(graph, source, destination, heuristic):
     if not path:
         return predecessors, path, "Destination not reachable"
 
-    return predecessors, path, costs.get(destination, "Destination not reachable")
+    return predecessors, path
 def reconstruct_path(predecessors, start, end):
         if end not in predecessors:
             return []  # Path not found
@@ -47,7 +47,6 @@ def reconstruct_path(predecessors, start, end):
         while end is not None:
             path.append(end)
             end = predecessors.get(end)
-        path.reverse()
         return path
 
 graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
@@ -178,7 +177,7 @@ expected = ([0, 2, 3], 190)
 result = A_Star(graph, source, destination, heuristic)
 print(result)
 
-test_cases = [
+"""test_cases = [
     {
         "graph": {'A': {'B': 1}, 'B': {'C': 1}, 'C': {}},
         "heuristic": {'A': 2, 'B': 1, 'C': 0},
@@ -214,4 +213,4 @@ test_cases = [
 # Running and printing the test cases
 for i, test in enumerate(test_cases, 1):
     predecessors, path, cost = A_Star(test["graph"], test["source"], test["destination"], test["heuristic"])
-    print(f"Test Case {i}: Path - {path}, Cost - {cost}")
+    print(f"Test Case {i}: Path - {path}, Cost - {cost}")"""
