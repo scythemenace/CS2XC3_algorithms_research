@@ -95,6 +95,7 @@ def heuristic(station_id, destination_id):
     return euclidean_distance(station_coord, destination_coord)
 
 def A_Star(graph, source, destination, heuristic):
+
     open_set = PriorityQueue()
     open_set.put(source, 0 + heuristic(source, destination))  # Corrected this line
     predecessors = {source: None}
@@ -118,11 +119,14 @@ def A_Star(graph, source, destination, heuristic):
     return predecessors, reconstruct_path(predecessors, source, destination)
 
 def reconstruct_path(predecessors, start, end):
-    path = []
-    while end is not None:
-        path.append(end)
-        end = predecessors[end]
-    return path[::-1] 
+        if end not in predecessors:
+            return []  # Path not found
+        path = []
+        while end is not None:
+            path.append(end)
+            end = predecessors.get(end)
+        path.reverse()
+        return path  
 
 
 def parse_stations(file_path):
@@ -248,7 +252,7 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     fig.tight_layout()
 
     #plt.show()
-    plt.savefig('performance_comparison1.png', bbox_inches='tight')
+    plt.savefig('performance_comparison4.png', bbox_inches='tight')
     
 station_pairs = [
     (1, 234),  # Short distance
@@ -258,6 +262,11 @@ station_pairs = [
     (13, 301),  # Same Line, Long Distance
     (11, 87),   # Different Lines, No Transfers
     (3, 295),   # Different Lines, Multiple Transfers
+    (117, 42),  # Heathrow Terminals 1, 2 & 3 to Canary Wharf
+    (282, 247), # Wembley Park to Stratford
+    (88, 299),  # Epping to Wimbledon
+    (35, 192),  # Brixton to Oxford Circus
+    (280, 167),  # Watford to Moorgate
 
 ]
 
