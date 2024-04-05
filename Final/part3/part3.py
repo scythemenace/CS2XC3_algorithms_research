@@ -47,9 +47,10 @@ def reconstruct_path(predecessors, start, end):
         while end is not None:
             path.append(end)
             end = predecessors.get(end)
+        path.reverse()
         return path
 
-graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
+"""graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
 source = 0
 destination = 2
 heuristic = {0: 2, 1: 1, 2: 0}
@@ -175,7 +176,7 @@ destination = 3
 heuristic = {0: 120, 1: 80, 2: 50, 3: 0}
 expected = ([0, 2, 3], 190)
 result = A_Star(graph, source, destination, heuristic)
-print(result)
+print(result)"""
 
 """test_cases = [
     {
