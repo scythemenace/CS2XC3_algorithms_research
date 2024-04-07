@@ -1,6 +1,6 @@
 
 import csv
-from math import radians, cos, sin, sqrt, atan2
+from math import radians, sqrt
 import time
 import matplotlib.pyplot as plt
 
@@ -18,6 +18,7 @@ class PriorityQueue:
 
     def get(self):
         return self.elements.pop()[1]  
+    
 def dijkstra(graph, start, end):
     """
     Finds the shortest path from start to end using Dijkstra's algorithm.
@@ -59,6 +60,7 @@ def dijkstra(graph, start, end):
     path.reverse()  # Reverse the path to start from the beginning
     
     return distance[end], path
+
 
 
 def euclidean_distance(coord1, coord2):
@@ -215,15 +217,37 @@ graph = build_graph(connections)
 def measure_performance(graph, start_id, end_id, heuristic):
     # Measure Dijkstra's algorithm performance
     start_time = time.time()
-    _, path_dijkstra = dijkstra(graph, start_id, end_id)
+    dijkstra(graph, start_id, end_id)
     dijkstra_time = time.time() - start_time
 
     # Measure A* algorithm performance
     start_time = time.time()
-    _, path_astar = A_Star(graph, start_id, end_id, heuristic)
+    A_Star(graph, start_id, end_id, heuristic)
     astar_time = time.time() - start_time
 
     return dijkstra_time, astar_time
+
+
+def count_line_changes(path, connections):
+    station_pairs_to_lines = {}
+    for conn in connections:
+        station1, station2, line, _ = conn
+        station_pairs_to_lines.setdefault((station1, station2), set()).add(line)
+        station_pairs_to_lines.setdefault((station2, station1), set()).add(line)
+
+    line_changes = 0
+    current_line = None
+    for i in range(len(path) - 1):
+        station1, station2 = path[i], path[i + 1]
+        possible_lines = station_pairs_to_lines.get((station1, station2), set())
+        
+        if not possible_lines.intersection({current_line}):
+            current_line = possible_lines.pop() if possible_lines else None
+            if i > 0:
+                line_changes += 1
+                
+    return line_changes
+
 
 def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijkstra vs A* Execution Time'):
     """
@@ -252,7 +276,7 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     fig.tight_layout()
 
     #plt.show()
-    plt.savefig('performance_comparison4.png', bbox_inches='tight')
+    plt.savefig('performance_comparison.png')
     
 station_pairs = [
     (1, 234),  # Short distance
@@ -274,15 +298,33 @@ station_pairs = [
 labels = []
 dijkstra_times = []
 astar_times = []
+line_changes_list = []
 
 for start_id, end_id in station_pairs:
-    # Correct lambda function: Accepts two arguments but ignores them and returns 0
-    dijkstra_time, _ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
-    astar_time, _ = measure_performance(graph, start_id, end_id, heuristic)
-
+    # Adjust to unpack all four returned values
+    dijkstra_time,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
+    astar_time,_ = measure_performance(graph, start_id, end_id, heuristic)
+    # Append data to lists for plotting and analysis
     labels.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
     dijkstra_times.append(dijkstra_time)
     astar_times.append(astar_time)
+    
+    # Optionally print out the information for verification
+    print(f"Pair: {labels[-1]}, Dijkstra Time: {dijkstra_time:.6f}, A* Time: {astar_time:.6f}")
 
-# Plot the comparison
+
+
 plot_performance_comparison(labels, dijkstra_times, astar_times)
+
+for (start_id, end_id), label in zip(station_pairs, labels):
+    _, dijkstra_path = dijkstra(graph, start_id, end_id)
+    _, astar_path = A_Star(graph, start_id, end_id, heuristic)
+    
+    # Calculate line changes for each path
+    dijkstra_line_changes = count_line_changes(dijkstra_path, connections)
+    astar_line_changes = count_line_changes(astar_path, connections)
+    
+    line_changes_list.append((dijkstra_line_changes, astar_line_changes))
+    
+    # Print using the correct label for each station pair
+    print(f"Pair: {label}, Dijkstra Line Changes: {dijkstra_line_changes}, A* Line Changes: {astar_line_changes}")
