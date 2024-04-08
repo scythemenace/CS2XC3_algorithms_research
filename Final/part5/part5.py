@@ -71,52 +71,47 @@ class SPAlgorithm(ABC):
     def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
         pass
 
-def dijkstra(graph, start, end):
-    distance = {vertex: float('infinity') for vertex in graph}
-    distance[start] = 0
-    predecessor = {vertex: None for vertex in graph}
-    pq = PriorityQueue()
-    pq.put(start, 0)
-    
-    while not pq.is_empty():
-        current_node = pq.get()
-        
-        if current_node == end:
-            break
-
-        for neighbor, weight in graph[current_node].items():
-            alt_route = distance[current_node] + weight
-            if alt_route < distance[neighbor]:
-                distance[neighbor] = alt_route
-                predecessor[neighbor] = current_node
-                pq.put(neighbor, alt_route)
-                
-    # Reconstruct path from end to start using predecessors
-    path = []
-    current = end
-    while current is not None:
-        path.append(current)
-        current = predecessor[current]
-    path.reverse()  # Reverse the path to start from the beginning
-    
-    return distance[end], path
-
 class Dijkstra(SPAlgorithm):
     def __init__(self, graph: WeightedGraph):
         super().__init__(graph)
-
-    def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
-
-        adapted_graph = {node: {} for node in self.graph.nodes}
     
-        for src_node, neighbors in self.graph.edges.items():
-            for dst_node, weight in neighbors.items():
-                adapted_graph[src_node][dst_node] = weight
+    def calc_sp(self, source, dest):
+        distance = {vertex: float('infinity') for vertex in self.graph.nodes}
+        distance[source] = 0
+        pq = PriorityQueue()
+        pq.put(source, 0)
+        visited = set()
+        predecessor = {vertex: None for vertex in self.graph.nodes}
         
-        # Running the Dijkstra's algorithm
-        distance, path = dijkstra(adapted_graph, source, dest)
+        while not pq.is_empty():
+            current_vertex = pq.get()
+            
+            if current_vertex in visited:
+                continue
+            visited.add(current_vertex)
+            
+            if current_vertex == dest:
+                break
+            
+            for neighbor in self.graph.get_adj_nodes(current_vertex):
+                if neighbor in visited:
+                    continue
+                alt_route = distance[current_vertex] + self.graph.w(current_vertex, neighbor)
+                if alt_route < distance[neighbor]:
+                    distance[neighbor] = alt_route
+                    pq.put(neighbor, alt_route)
+                    predecessor[neighbor] = current_vertex
         
-        return path, distance
+        # Reconstruct path
+        path = []
+        current = dest
+        while current is not None and current in predecessor:
+            path.append(current)
+            current = predecessor[current]
+        path.reverse()
+        
+        return path, distance[dest] if distance[dest] != float('infinity') else float('inf')
+
 
 class A_Star_Adapter(SPAlgorithm):
     def __init__(self, heuristic_graph: HeuristicGraph):
@@ -260,6 +255,7 @@ def create_heuristic_graph():
     graph.add_edge(3, 4, 3.0)
     graph.add_edge(4, 5, 4.0)
     graph.add_edge(1, 5, 10.0)
+    print(graph.edges)
     return graph
 
 def test_dijkstra_simple_path():
@@ -300,10 +296,43 @@ def test_bellman_ford_negative_cycle():
     except ValueError as e:
         assert str(e) == "Graph contains a negative-weight cycle", "Incorrect error message"
     print("Test Case 4 Passed: Bellman-Ford Negative Weight Cycle")
+def test_a_star_adapter():
+    # Test case 1
+    graph1 = HeuristicGraph({0: 2, 1: 1, 2: 0})
+    graph1.add_edge(0, 1, 1)
+    graph1.add_edge(1, 2, 1)
+    a_star1 = A_Star_Adapter(graph1)
+    print(a_star1.calc_sp(0, 2))  # Expected: ([0, 1, 2], 2)
 
+    # Test case 2
+    graph2 = HeuristicGraph({0: 2, 1: 1, 2: 1, 3: 0})
+    graph2.add_edge(0, 1, 1)
+    graph2.add_edge(0, 2, 5)
+    graph2.add_edge(1, 3, 1)
+    graph2.add_edge(2, 3, 1)
+    a_star2 = A_Star_Adapter(graph2)
+    print(a_star2.calc_sp(0, 3))  # Expected: ([0, 1, 3], 2)
+
+    # Test case 3
+    graph3 = HeuristicGraph({0: 3, 1: 2, 2: 1, 3: 0})
+    graph3.add_edge(0, 1, 1)
+    graph3.add_edge(1, 2, 1)
+    graph3.add_edge(2, 1, 1)
+    graph3.add_edge(2, 3, 1)
+    a_star3 = A_Star_Adapter(graph3)
+    print(a_star3.calc_sp(0, 3))  # Expected: ([0, 1, 2, 3], 3)
+
+    # Test case 4
+    graph4 = HeuristicGraph({0: 1, 1: 2, 2: 1, 3: 0})
+    graph4.add_edge(0, 1, 1)
+    graph4.add_edge(0, 2, 2)
+    graph4.add_edge(0, 3, 3)
+    a_star4 = A_Star_Adapter(graph4)
+    print(a_star4.calc_sp(0, 3))  # Expected: ([0, 3], 3)
 
 if __name__ == "__main__":
     test_dijkstra_simple_path()
     test_a_star_simple_path()
     test_dijkstra_disconnected_graph()
     test_bellman_ford_negative_cycle()
+    test_a_star_adapter()

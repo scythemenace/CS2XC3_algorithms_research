@@ -7,11 +7,15 @@ class PriorityQueue:
         return not self.elements
 
     def put(self, item, priority):
+        # Add item with its priority
         self.elements.append((priority, item))
-        self.elements.sort(reverse=True)
+        # Sort elements based on priority, lowest first
+        self.elements.sort(key=lambda x: x[0])
 
     def get(self):
-        return self.elements.pop()[1]  
+        # Pop the item with the lowest priority
+        return self.elements.pop(0)[1]
+
 
 def A_Star(graph, source, destination, heuristic):
 
@@ -49,6 +53,8 @@ def reconstruct_path(predecessors, start, end):
             end = predecessors.get(end)
         path.reverse()
         return path
+
+
 
 """graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
 source = 0
