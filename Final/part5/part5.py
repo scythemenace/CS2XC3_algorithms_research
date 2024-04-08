@@ -120,27 +120,23 @@ class Dijkstra(SPAlgorithm):
 
 class A_Star_Adapter(SPAlgorithm):
     def __init__(self, heuristic_graph: HeuristicGraph):
-        super().__init__(heuristic_graph)  # Initialize the superclass with the graph
+        super().__init__(heuristic_graph)
         self.heuristic_graph = heuristic_graph
-        # Assuming the heuristic information is encapsulated within the heuristic_graph
 
     def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
-        # Prepare the graph and heuristic for A* algorithm
         graph = {node: {} for node in self.heuristic_graph.nodes}
         for node, neighbors in self.heuristic_graph.edges.items():
             for neighbor in neighbors:
-                if neighbor in self.heuristic_graph.edges[node]:  # Ensure there's a weight
+                if neighbor in self.heuristic_graph.edges[node]: 
                     graph[node][neighbor] = self.heuristic_graph.w(node, neighbor)
         
         heuristic = {node: self.heuristic_graph.get_heuristic(node) for node in self.heuristic_graph.nodes}
 
-        # Run the A* algorithm
         _, path = self.a_star_algorithm(graph, source, dest, heuristic)
 
         if not path:
-            return [], float('inf')  # Destination not reachable
+            return [], float('inf') 
 
-        # Calculate the path cost
         path_cost = sum([self.heuristic_graph.w(path[i], path[i+1]) for i in range(len(path) - 1)])
         
         return path, path_cost
@@ -180,7 +176,7 @@ class A_Star_Adapter(SPAlgorithm):
         while end is not None:
             path.append(end)
             end = predecessors.get(end)
-
+        path.reverse()  # Reverse the path to start from the beginning
         return path
 
     

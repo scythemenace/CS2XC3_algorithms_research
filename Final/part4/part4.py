@@ -199,7 +199,6 @@ def build_graph(connections):
     graph = {}
 
     for station1, station2, _, time in connections:
-        # Initialize station1 and station2 in graph if they don't exist
         if station1 not in graph:
             graph[station1] = {}
         if station2 not in graph:
@@ -278,6 +277,7 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     #plt.show()
     plt.savefig('performance_comparison.png')
     
+    
 station_pairs = [
     (1, 234),  # Short distance
     (10, 150),  # Medium distance
@@ -328,3 +328,4 @@ for (start_id, end_id), label in zip(station_pairs, labels):
     
     # Print using the correct label for each station pair
     print(f"Pair: {label}, Dijkstra Line Changes: {dijkstra_line_changes}, A* Line Changes: {astar_line_changes}")
+
