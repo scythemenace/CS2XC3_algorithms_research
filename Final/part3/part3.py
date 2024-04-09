@@ -1,32 +1,69 @@
 
-class PriorityQueue:
+
+class MinPriorityQueue:
     def __init__(self):
-        self.elements = []
+        self.heap = []
+
+    def parent(self, i):
+        return (i - 1) // 2
+
+    def left_child(self, i):
+        return 2 * i + 1
+
+    def right_child(self, i):
+        return 2 * i + 2
+
+    def insert(self, val):
+        self.heap.append(val)
+        self._heapify_up(len(self.heap) - 1)
+
+    def delete_min(self):
+        if len(self.heap) == 0:
+            return None  # Handle empty queue case
+
+        self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
+        min_val = self.heap.pop()
+        self._heapify_down(0)
+        return min_val
+
+    def _heapify_up(self, index):
+        while index > 0 and self.heap[self.parent(index)] > self.heap[index]:
+            self.heap[index], self.heap[self.parent(index)] = self.heap[self.parent(index)], self.heap[index]
+            index = self.parent(index)
+
+    def _heapify_down(self, index):
+        while index < len(self.heap):
+            smallest = index
+            left = self.left_child(index)
+            right = self.right_child(index)
+
+            if left < len(self.heap) and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < len(self.heap) and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest != index:
+                self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+                index = smallest
+            else:
+                break
+
+
+    def put(self, node, priority):
+        self.insert((priority, node))
 
     def is_empty(self):
-        return not self.elements
-
-    def put(self, item, priority):
-        # Add item with its priority
-        self.elements.append((priority, item))
-        # Sort elements based on priority, lowest first
-        self.elements.sort(key=lambda x: x[0])
-
-    def get(self):
-        # Pop the item with the lowest priority
-        return self.elements.pop(0)[1]
+        return len(self.heap) == 0
 
 
 def A_Star(graph, source, destination, heuristic):
-
-
-    open_list = PriorityQueue()
-    open_list.put(source, 0 + heuristic[source])
+    open_list = MinPriorityQueue()
+    open_list.insert((0 + heuristic[source], source))
     predecessors = {source: None}
     costs = {source: 0}
 
-    while not open_list.is_empty():
-        current = open_list.get()
+    while len(open_list.heap) > 0:  # Adapted to use the length of the heap directly
+        _, current = open_list.delete_min()  # Adjusted to handle tuple extraction
 
         if current == destination:
             break
@@ -36,14 +73,15 @@ def A_Star(graph, source, destination, heuristic):
             if neighbor not in costs or new_cost < costs[neighbor]:
                 costs[neighbor] = new_cost
                 priority = new_cost + heuristic[neighbor]
-                open_list.put(neighbor, priority)
+                open_list.insert((priority, neighbor))  # Insert tuple of priority and neighbor
                 predecessors[neighbor] = current
 
     path = reconstruct_path(predecessors, source, destination)
     if not path:
         return predecessors, path, "Destination not reachable"
 
-    return predecessors, path
+    return predecessors, path,costs [destination]
+
 def reconstruct_path(predecessors, start, end):
         if end not in predecessors:
             return []  # Path not found
@@ -56,7 +94,7 @@ def reconstruct_path(predecessors, start, end):
 
 
 
-"""graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
+graph = {0: {1: 1}, 1: {2: 1}, 2: {}}
 source = 0
 destination = 2
 heuristic = {0: 2, 1: 1, 2: 0}
@@ -182,7 +220,7 @@ destination = 3
 heuristic = {0: 120, 1: 80, 2: 50, 3: 0}
 expected = ([0, 2, 3], 190)
 result = A_Star(graph, source, destination, heuristic)
-print(result)"""
+print(result)
 
 """test_cases = [
     {

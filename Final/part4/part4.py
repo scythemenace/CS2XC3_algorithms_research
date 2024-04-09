@@ -5,19 +5,60 @@ import time
 import matplotlib.pyplot as plt
 
 
-class PriorityQueue:
+class MinPriorityQueue:
     def __init__(self):
-        self.elements = []
+        self.heap = []
+
+    def parent(self, i):
+        return (i - 1) // 2
+
+    def left_child(self, i):
+        return 2 * i + 1
+
+    def right_child(self, i):
+        return 2 * i + 2
+
+    def insert(self, val):
+        self.heap.append(val)
+        self._heapify_up(len(self.heap) - 1)
+
+    def delete_min(self):
+        if len(self.heap) == 0:
+            return None  # Handle empty queue case
+
+        self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
+        min_val = self.heap.pop()
+        self._heapify_down(0)
+        return min_val
+
+    def _heapify_up(self, index):
+        while index > 0 and self.heap[self.parent(index)] > self.heap[index]:
+            self.heap[index], self.heap[self.parent(index)] = self.heap[self.parent(index)], self.heap[index]
+            index = self.parent(index)
+
+    def _heapify_down(self, index):
+        while index < len(self.heap):
+            smallest = index
+            left = self.left_child(index)
+            right = self.right_child(index)
+
+            if left < len(self.heap) and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < len(self.heap) and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest != index:
+                self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+                index = smallest
+            else:
+                break
+
+
+    def put(self, node, priority):
+        self.insert((priority, node))
 
     def is_empty(self):
-        return not self.elements
-
-    def put(self, item, priority):
-        self.elements.append((priority, item))
-        self.elements.sort(reverse=True)
-
-    def get(self):
-        return self.elements.pop()[1]  
+        return len(self.heap) == 0
     
 def dijkstra(graph, start, end):
     """
@@ -35,11 +76,11 @@ def dijkstra(graph, start, end):
     distance = {vertex: float('infinity') for vertex in graph}
     distance[start] = 0
     predecessor = {vertex: None for vertex in graph}
-    pq = PriorityQueue()
+    pq = MinPriorityQueue()
     pq.put(start, 0)
     
     while not pq.is_empty():
-        current_node = pq.get()
+        _, current_node = pq.delete_min()  # Adjusted to work with the tuple (priority, node)
         
         if current_node == end:
             break
@@ -49,7 +90,7 @@ def dijkstra(graph, start, end):
             if alt_route < distance[neighbor]:
                 distance[neighbor] = alt_route
                 predecessor[neighbor] = current_node
-                pq.put(neighbor, alt_route)
+                pq.put(neighbor, alt_route)  # Use the adjusted put method
                 
     # Reconstruct path from end to start using predecessors
     path = []
@@ -97,28 +138,31 @@ def heuristic(station_id, destination_id):
     return euclidean_distance(station_coord, destination_coord)
 
 def A_Star(graph, source, destination, heuristic):
-
-    open_set = PriorityQueue()
-    open_set.put(source, 0 + heuristic(source, destination))  # Corrected this line
+    open_list = MinPriorityQueue()
+    open_list.insert((0 + heuristic(source, destination), source))  # Corrected line
     predecessors = {source: None}
-    actual_costs = {source: 0}
+    costs = {source: 0}
 
-    while not open_set.is_empty():
-        current_node = open_set.get()
+    while not open_list.is_empty():
+        _, current = open_list.delete_min()
 
-        if current_node == destination:
-            break  # When the destination is reached, exit the loop
+        if current == destination:
+            break
 
-        for neighbor, weight in graph[current_node].items():
-            tentative_cost = actual_costs[current_node] + weight
-            if neighbor not in actual_costs or tentative_cost < actual_costs[neighbor]:
-                actual_costs[neighbor] = tentative_cost
-                # Calculate total cost as the sum of actual cost so far and heuristic estimate to the goal
-                total_cost = tentative_cost + heuristic(neighbor, destination)
-                open_set.put(neighbor, total_cost)
-                predecessors[neighbor] = current_node
+        for neighbor, weight in graph[current].items():
+            new_cost = costs[current] + weight
+            if neighbor not in costs or new_cost < costs[neighbor]:
+                costs[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor, destination)  # Corrected line
+                open_list.insert((priority, neighbor))
+                predecessors[neighbor] = current
 
-    return predecessors, reconstruct_path(predecessors, source, destination)
+    path = reconstruct_path(predecessors, source, destination)
+    if not path:
+        return predecessors, "Destination not reachable"
+
+    return predecessors, path
+
 
 def reconstruct_path(predecessors, start, end):
         if end not in predecessors:
@@ -207,11 +251,11 @@ def build_graph(connections):
         # Add the edge from station1 to station2 and vice versa
         graph[station1][station2] = time
         graph[station2][station1] = time  # Assuming bidirectional connections
-
     return graph
 
 
 graph = build_graph(connections)
+
 
 def measure_performance(graph, start_id, end_id, heuristic):
     # Measure Dijkstra's algorithm performance
@@ -231,8 +275,14 @@ def count_line_changes(path, connections):
     station_pairs_to_lines = {}
     for conn in connections:
         station1, station2, line, _ = conn
-        station_pairs_to_lines.setdefault((station1, station2), set()).add(line)
-        station_pairs_to_lines.setdefault((station2, station1), set()).add(line)
+        # Manually check and add to the dictionary
+        if (station1, station2) not in station_pairs_to_lines:
+            station_pairs_to_lines[(station1, station2)] = set()
+        station_pairs_to_lines[(station1, station2)].add(line)
+        
+        if (station2, station1) not in station_pairs_to_lines:
+            station_pairs_to_lines[(station2, station1)] = set()
+        station_pairs_to_lines[(station2, station1)].add(line)
 
     line_changes = 0
     current_line = None
@@ -240,8 +290,14 @@ def count_line_changes(path, connections):
         station1, station2 = path[i], path[i + 1]
         possible_lines = station_pairs_to_lines.get((station1, station2), set())
         
-        if not possible_lines.intersection({current_line}):
-            current_line = possible_lines.pop() if possible_lines else None
+        # Manually checking if the current line is a possible line for the next segment
+        if current_line not in possible_lines:
+            # Manually picking a new current line if the current one isn't possible
+            for line in possible_lines:
+                current_line = line
+                break  # Break after setting to the first found line
+            
+            # Increment line_changes if it's not the first segment
             if i > 0:
                 line_changes += 1
                 
@@ -300,6 +356,8 @@ dijkstra_times = []
 astar_times = []
 line_changes_list = []
 
+print("Time Comparison between Dijkstra's and A* Algorithms:")
+print("---------------------------------------------------------------------------------------------------")
 for start_id, end_id in station_pairs:
     # Adjust to unpack all four returned values
     dijkstra_time,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
@@ -311,11 +369,13 @@ for start_id, end_id in station_pairs:
     
     # Optionally print out the information for verification
     print(f"Pair: {labels[-1]}, Dijkstra Time: {dijkstra_time:.6f}, A* Time: {astar_time:.6f}")
-
+print("---------------------------------------------------------------------------------------------------")
 
 
 plot_performance_comparison(labels, dijkstra_times, astar_times)
 
+print("Line Change Comparison between Dijkstra's and A* Algorithms:")
+print("---------------------------------------------------------------------------------------------------" )
 for (start_id, end_id), label in zip(station_pairs, labels):
     _, dijkstra_path = dijkstra(graph, start_id, end_id)
     _, astar_path = A_Star(graph, start_id, end_id, heuristic)
@@ -328,4 +388,5 @@ for (start_id, end_id), label in zip(station_pairs, labels):
     
     # Print using the correct label for each station pair
     print(f"Pair: {label}, Dijkstra Line Changes: {dijkstra_line_changes}, A* Line Changes: {astar_line_changes}")
-
+    
+    

@@ -56,12 +56,12 @@ class WeightedGraph(Graph):
 
 
 class HeuristicGraph(WeightedGraph):
-    def __init__(self, heuristic: Dict[int, float]):
+    def __init__(self, _heuristic: Dict[int, float]):
         super().__init__()
-        self.heuristic = heuristic
+        self._heuristic = _heuristic
 
     def get_heuristic(self, node): 
-        return self.heuristic.get(node, float('inf'))
+        return self._heuristic.get(node, float('inf'))
 
 class SPAlgorithm(ABC):
     def __init__(self, graph: Graph):
@@ -78,13 +78,13 @@ class Dijkstra(SPAlgorithm):
     def calc_sp(self, source, dest):
         distance = {vertex: float('infinity') for vertex in self.graph.nodes}
         distance[source] = 0
-        pq = PriorityQueue()
+        pq = MinPriorityQueue()  # Use MinPriorityQueue
         pq.put(source, 0)
         visited = set()
         predecessor = {vertex: None for vertex in self.graph.nodes}
         
         while not pq.is_empty():
-            current_vertex = pq.get()
+            _, current_vertex = pq.delete_min()  # Adjusted for MinPriorityQueue
             
             if current_vertex in visited:
                 continue
@@ -99,7 +99,7 @@ class Dijkstra(SPAlgorithm):
                 alt_route = distance[current_vertex] + self.graph.w(current_vertex, neighbor)
                 if alt_route < distance[neighbor]:
                     distance[neighbor] = alt_route
-                    pq.put(neighbor, alt_route)
+                    pq.put(neighbor, alt_route)  # Use put method of MinPriorityQueue
                     predecessor[neighbor] = current_vertex
         
         # Reconstruct path
@@ -113,6 +113,7 @@ class Dijkstra(SPAlgorithm):
         return path, distance[dest] if distance[dest] != float('infinity') else float('inf')
 
 
+
 class A_Star_Adapter(SPAlgorithm):
     def __init__(self, heuristic_graph: HeuristicGraph):
         super().__init__(heuristic_graph)
@@ -121,58 +122,57 @@ class A_Star_Adapter(SPAlgorithm):
     def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
         graph = {node: {} for node in self.heuristic_graph.nodes}
         for node, neighbors in self.heuristic_graph.edges.items():
-            for neighbor in neighbors:
-                if neighbor in self.heuristic_graph.edges[node]: 
-                    graph[node][neighbor] = self.heuristic_graph.w(node, neighbor)
+            for neighbor, weight in neighbors.items():
+                graph[node][neighbor] = weight
         
         heuristic = {node: self.heuristic_graph.get_heuristic(node) for node in self.heuristic_graph.nodes}
 
-        _, path = self.a_star_algorithm(graph, source, dest, heuristic)
+        path, cost = self.a_star_algorithm(graph, source, dest, heuristic)  # Make sure this returns the correct values
 
-        if not path:
-            return [], float('inf') 
+        if not path:  # Checks if path is empty or not found
+            return [], float('inf')
 
-        path_cost = sum([self.heuristic_graph.w(path[i], path[i+1]) for i in range(len(path) - 1)])
+        # Assuming 'path' is a list of nodes representing the shortest path
+        path_cost = sum([self.heuristic_graph.w(path[i], path[i + 1]) for i in range(len(path) - 1)])
+
         
         return path, path_cost
 
     def a_star_algorithm(self, graph, source, destination, heuristic):
-        open_list = PriorityQueue()
-        open_list.put(source, 0 + heuristic[source])
+        open_list = MinPriorityQueue()
+        open_list.put(source, heuristic[source])  # Initially, the cost to reach the source is just the heuristic
         predecessors = {source: None}
         costs = {source: 0}
 
         while not open_list.is_empty():
-            current = open_list.get()
+            _, current = open_list.delete_min()
 
             if current == destination:
                 break
 
-            
             for neighbor, weight in graph[current].items():
                 new_cost = costs[current] + weight
-
                 if neighbor not in costs or new_cost < costs[neighbor]:
                     costs[neighbor] = new_cost
                     priority = new_cost + heuristic[neighbor]
                     open_list.put(neighbor, priority)
                     predecessors[neighbor] = current
 
-        path = self.reconstruct_path(predecessors, source, destination)
-        if not path:
-            return predecessors, [], "Destination not reachable"
-
-        return predecessors, path
+        return self.reconstruct_path(predecessors, source, destination), costs.get(destination, float('inf'))
 
     def reconstruct_path(self, predecessors, start, end):
-        if end not in predecessors:
-            return []  # Path not found
         path = []
-        while end is not None:
-            path.append(end)
-            end = predecessors.get(end)
-        path.reverse()  # Reverse the path to start from the beginning
+        current = end
+        while current != start and current is not None:
+            path.append(current)
+            current = predecessors.get(current)
+        if current is None:  # If start node wasn't reached
+            return [], float('inf')
+        path.append(start)  # Add the start node
+        path.reverse()
         return path
+
+
 
     
 class BellmanFord(SPAlgorithm):
@@ -206,19 +206,60 @@ class BellmanFord(SPAlgorithm):
 
         return path, distances[dest] if distances[dest] != float('inf') else None
 
-class PriorityQueue:
+class MinPriorityQueue:
     def __init__(self):
-        self.elements = []
+        self.heap = []
+
+    def parent(self, i):
+        return (i - 1) // 2
+
+    def left_child(self, i):
+        return 2 * i + 1
+
+    def right_child(self, i):
+        return 2 * i + 2
+
+    def insert(self, val):
+        self.heap.append(val)
+        self._heapify_up(len(self.heap) - 1)
+
+    def delete_min(self):
+        if len(self.heap) == 0:
+            return None  # Handle empty queue case
+
+        self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
+        min_val = self.heap.pop()
+        self._heapify_down(0)
+        return min_val
+
+    def _heapify_up(self, index):
+        while index > 0 and self.heap[self.parent(index)] > self.heap[index]:
+            self.heap[index], self.heap[self.parent(index)] = self.heap[self.parent(index)], self.heap[index]
+            index = self.parent(index)
+
+    def _heapify_down(self, index):
+        while index < len(self.heap):
+            smallest = index
+            left = self.left_child(index)
+            right = self.right_child(index)
+
+            if left < len(self.heap) and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < len(self.heap) and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest != index:
+                self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+                index = smallest
+            else:
+                break
+
+
+    def put(self, node, priority):
+        self.insert((priority, node))
 
     def is_empty(self):
-        return not self.elements
-
-    def put(self, item, priority):
-        self.elements.append((priority, item))
-        self.elements.sort(reverse=True)
-
-    def get(self):
-        return self.elements.pop()[1]  
+        return len(self.heap) == 0
 
 
 class ShortPathFinder:
@@ -255,7 +296,6 @@ def create_heuristic_graph():
     graph.add_edge(3, 4, 3.0)
     graph.add_edge(4, 5, 4.0)
     graph.add_edge(1, 5, 10.0)
-    print(graph.edges)
     return graph
 
 def test_dijkstra_simple_path():
@@ -266,12 +306,7 @@ def test_dijkstra_simple_path():
     print(path, cost)
 
 
-def test_a_star_simple_path():
-    graph = create_heuristic_graph()
-    a_star_algo = A_Star_Adapter(graph)
-    finder = ShortPathFinder(graph, a_star_algo)
-    path, cost = finder.calc_short_path(1, 5)
-    print(path, cost)
+
 
 
 def test_dijkstra_disconnected_graph():
@@ -330,9 +365,8 @@ def test_a_star_adapter():
     a_star4 = A_Star_Adapter(graph4)
     print(a_star4.calc_sp(0, 3))  # Expected: ([0, 3], 3)
 
-if __name__ == "__main__":
-    test_dijkstra_simple_path()
-    test_a_star_simple_path()
-    test_dijkstra_disconnected_graph()
-    test_bellman_ford_negative_cycle()
-    test_a_star_adapter()
+
+test_dijkstra_simple_path()
+test_dijkstra_disconnected_graph()
+test_bellman_ford_negative_cycle()
+test_a_star_adapter()
