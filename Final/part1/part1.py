@@ -2,6 +2,65 @@ import time
 import matplotlib.pyplot as plt
 import random
 
+class MinPriorityQueue:
+    def __init__(self):
+        self.heap = []
+
+    def parent(self, i):
+        return (i - 1) // 2
+
+    def left_child(self, i):
+        return 2 * i + 1
+
+    def right_child(self, i):
+        return 2 * i + 2
+
+    def insert(self, val):
+        self.heap.append(val)
+        self._heapify_up(len(self.heap) - 1)
+
+    def delete_min(self):
+        if len(self.heap) == 0:
+            return None  # Handle empty queue case
+
+        self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
+        min_val = self.heap.pop()
+        self._heapify_down(0)
+        return min_val
+
+    def _heapify_up(self, index):
+        while index > 0 and self.heap[self.parent(index)] > self.heap[index]:
+            self.heap[index], self.heap[self.parent(index)] =self.heap[self.parent(index)], self.heap[index]
+            index = self.parent(index)
+
+    def _heapify_down(self, index):
+        while index < len(self.heap):
+            smallest = index
+            left = self.left_child(index)
+            right = self.right_child(index)
+
+            if left < len(self.heap) and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < len(self.heap) and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest != index:
+                self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+                index = smallest
+            else:
+                break
+
+"""
+queue = MinPriorityQueue()
+queue.insert(10)
+queue.insert(5)
+queue.insert(20)
+queue.insert(3)
+
+print(queue.delete_min())
+print(queue.delete_min())
+"""
+
 class Graph:
     def __init__(self, size, directed=False):
         self.adj_matrix = [[0] * size for _ in range(size)]
@@ -236,7 +295,7 @@ Let's test the algorithms based on their time taken for three different variable
 3. Graph density
 """
 
-def generate_random_graph(size, density, directed=False):
+def generate_random_graph(size, density, directed=False, negative_weights=False):
     if density < 0 or density > 1:
         raise ValueError("Density must be between 0 and 1.")
     graph = Graph(size, directed)
@@ -252,6 +311,8 @@ def generate_random_graph(size, density, directed=False):
             u = random.randint(0, size - 1)
             v = random.randint(0, size - 1)
             if u != v and graph.adj_matrix[u][v] == 0:
+                if negative_weights:
+                    weight = random.randint(-5, 10)
                 weight = random.randint(1, 10) 
                 graph.add_edge(u, v, weight)
                 break
@@ -283,7 +344,7 @@ def time_algorithm(graph, source, algorithm='d', relaxation_limit=3):
 
 
 # Experiment 1: Variable Graph Size
-graph_sizes = range(10, 100, 10)  # Graph sizes to test
+graph_sizes = range(4, 20, 3)  # Graph sizes to test
 density = 0.5   # Fixed density
 dijkstra_times = []
 bellman_ford_times = []
@@ -341,7 +402,7 @@ for k in relaxations:
     source = random.choice(graph.vertex_data)  # Random source
 
     dijkstra_times.append(time_algorithm(graph, source, 'd', k))
-    bellman_ford_times.append(time_algorithm(graph, source, 'b', k))
+    bellman_ford_times.append(time_algorithm(graph, source, 'b', 10))
 
 plt.figure(figsize=(10, 6))
 plt.plot(relaxations, dijkstra_times, label='Dijkstra')
@@ -351,3 +412,9 @@ plt.ylabel('Time (seconds)')
 plt.title('Time Complexity: Relaxation Limit Variation')
 plt.legend()
 plt.show()
+
+"""
+Next we test the accuracy of the algorithms by comparing the results of the two algorithms for again the same three cases.
+We'll find the distance from before and after the relaxation limit and check if the distances are same or not.
+"""
+
