@@ -1,363 +1,117 @@
 import time
 import matplotlib.pyplot as plt
 import random
-import networkx as nx
-import sys
 
-def get_size(obj):
-  size = sys.getsizeof(obj)
-  if isinstance(obj, dict):
-    size += sum(get_size(k) + get_size(v) for k, v in obj.items())
-  if isinstance(obj, (list, set, tuple)): 
-    size += sum(get_size(v) for v in obj)
-  return size
+class Graph:
+    def __init__(self, size):
+        self.adj_matrix = [[0] * size for _ in range(size)]
+        self.size = size
+        self.vertex_data = [''] * size
 
-def dijkstra(graph, source, k):
-    dist = [float('inf')] * len(graph)
-    dist[source] = 0
-    path = {vertex: [] for vertex in range(len(graph))}
-    path[source] = [source]
-    unvisited = set(range(len(graph)))
-    relaxations = {vertex: 0 for vertex in range(len(graph))}
+    def add_edge(self, u, v, weight, directed=False):
+        if 0 <= u < self.size and 0 <= v < self.size:
+            self.adj_matrix[u][v] = weight
+            if not directed:
+                self.adj_matrix[v][u] = weight  # For undirected graph
 
-    while unvisited:
-        current_node = None
-        current_distance = float('inf')
-        for node in unvisited:
-            if dist[node] < current_distance:
-                current_node = node
-                current_distance = dist[node]
+    def add_vertex_data(self, vertex, data):
+        if 0 <= vertex < self.size:
+            self.vertex_data[vertex] = data
 
-        if current_node is None:
-            break
+    def dijkstra(self, start_vertex_data, k):
+        start_vertex = self.vertex_data.index(start_vertex_data)
+        distances = [float('inf')] * self.size
+        distances[start_vertex] = 0
+        visited = [False] * self.size
+        paths = {v: [] for v in range(self.size)}   # Store paths
+        paths[start_vertex] = [start_vertex_data]   # Initial path for source
+        counts = [0] * self.size  # Track relaxations per node
 
-        unvisited.remove(current_node)
+        for _ in range(self.size):
+            min_distance = float('inf')
+            u = None
+            for i in range(self.size):
+                if not visited[i] and distances[i] < min_distance and counts[i] < k:
+                    min_distance = distances[i]
+                    u = i
 
-        if relaxations[current_node] >= k:
-            continue
+            if u is None:
+                break
 
-        for neighbor in range(len(graph)):
-            weight = graph[current_node][neighbor] 
-            if weight > 0:
-                new_distance = current_distance + weight
-                if new_distance < dist[neighbor]:
-                    dist[neighbor] = new_distance
-                    path[neighbor] = path[current_node] + [neighbor]
-                    relaxations[neighbor] += 1
+            visited[u] = True
+            counts[u] += 1  # Increment relaxation count
 
-    return dist, path
-
-def bellman_ford(graph, source, k):
-    dist = [float('inf')] * len(graph)
-    dist[source] = 0
-    path = {vertex: [] for vertex in range(len(graph))}
-    path[source] = [source]
-    relaxations = {vertex: 0 for vertex in range(len(graph))}
-
-    for _ in range(len(graph) - 1):  
-        for node in range(len(graph)):
-            if relaxations[node] < k:  
-                for neighbor in range(len(graph)):
-                    weight = graph[node][neighbor]
-                    if weight > 0: 
-                        new_distance = dist[node] + weight
-                        if new_distance < dist[neighbor]:
-                            dist[neighbor] = new_distance
-                            path[neighbor] = path[node] + [neighbor]
-                            relaxations[neighbor] += 1
-
-    return dist, path
-
-def measure_space_complexity_dijkstra(graph, source, k):
-    dist, path = dijkstra(graph, source, k)
-
-    # Calculate space used by major data structures
-    space_dist = get_size(dist)
-    space_path = get_size(path)
-
-    total_space = space_dist + space_path
-    return total_space 
-
-def measure_space_complexity_bellman_ford(graph, source, k):
-    dist, path = bellman_ford(graph, source, k)
-
-    # Calculate space used by major data structures
-    space_dist = get_size(dist)
-    space_path = get_size(path)
-
-    total_space = space_dist + space_path
-    return total_space 
-
-
-def generate_random_graph(n, density):
-    if density < 0 or density > 1:
-        raise ValueError("Density must be in the range [0, 1]")
-    graph = [[0] * n for _ in range(n)]
-    for i in range(n):
-        for j in range(i+1, n):
-            if random.random() < density:
-                graph[i][j] = random.randint(1, 10)
-    return graph
-
-def accuracy_calc(graph, source):
-    dist = [float('inf')] * len(graph)
-    dist[source] = 0
-    queue = [source]
-    visited = set()
-
-    while queue:
-        current_node = queue.pop(0)
-        visited.add(current_node)
-
-        for neighbor, weight in enumerate(graph[current_node]):
-            if weight > 0 and neighbor not in visited:
-                new_distance = dist[current_node] + weight
-                if new_distance < dist[neighbor]:
-                    dist[neighbor] = new_distance
-                    queue.append(neighbor)
-
-    return dist
-
-def measure_accuracy(graph, source, algorithm, k=3):
-    if algorithm == 'dijkstra':
-        dist, _ = dijkstra(graph, source, k) 
-    else: 
-        dist, _ = bellman_ford(graph, source, k)
-
-    true_distances = accuracy_calc(graph, source)
-    correct_count = 0
-    for i in range(len(graph)):
-        if dist[i] == true_distances[i]:
-            correct_count += 1
-
-    accuracy = correct_count / len(graph)  # Percentage of correct distances
-    return accuracy
-
-def calc_time(algorithm, graph_size, density, k):
-    graph = generate_random_graph(graph_size, density)
-    source = 0 
-
-    start_time = time.time()
-    dist, path = algorithm(graph, source, k)
-    end_time = time.time()
+            for v in range(self.size):
+                if self.adj_matrix[u][v] != 0 and not visited[v]:
+                    alt = distances[u] + self.adj_matrix[u][v]
+                    if alt < distances[v]:
+                        distances[v] = alt
+                        # Update path
+                        paths[v] = paths[u] + [self.vertex_data[v]] 
+        return distances, paths
     
-    execution_time = end_time - start_time
+    def bellman_ford(self, start_vertex_data, k):
+        start_vertex = self.vertex_data.index(start_vertex_data)
+        distances = [float('inf')] * self.size
+        distances[start_vertex] = 0
+        paths = {v: [] for v in range(self.size)}
+        paths[start_vertex] = [start_vertex_data]
+        counts = [0] * self.size
 
-    return execution_time
+        for i in range(self.size - 1):
+            for u in range(self.size):
+                for v in range(self.size):
+                    if self.adj_matrix[u][v] != 0 and counts[v] < k:
+                        if distances[u] + self.adj_matrix[u][v] < distances[v]:
+                            distances[v] = distances[u] + self.adj_matrix[u][v]
+                            paths[v] = paths[u] + [self.vertex_data[v]]
+                            counts[v] += 1
 
+        # Negative cycle detection
+        for u in range(self.size):
+            for v in range(self.size):
+                if self.adj_matrix[u][v] != 0:
+                    if distances[u] + self.adj_matrix[u][v] < distances[v]:
+                        return True, [], {} 
 
-"""We write three different experiments calculating time complexity
-for different variables:- First graph size, second relaxation limit and third density."""
+        return False, distances, paths
+    
+"""
+Running a very basic test in order to check if Dijkstra's and Bellman Ford algorithms are working as expected.
+Below is the first test which is a basic test to check if the algorithms show the same distances for positive weights
+"""
+    
+graph = Graph(4)
 
-# Parameters for the first experiment:
-densities = 0.5  # Fixed density
-k = 3  # Fixed relaxation limit
+# Add vertex data
+graph.add_vertex_data(0, 'A')
+graph.add_vertex_data(1, 'B')
+graph.add_vertex_data(2, 'C')
+graph.add_vertex_data(3, 'D')
 
-# Experiment for different graph sizes:
-graph_sizes = list(range(5, 101, 5))
-dijkstra_times = []
-bellman_ford_times = []
+# Add edges with negative weights creating a negative cycle
+graph.add_edge(0, 1, 5)
+graph.add_edge(0, 3, 4)
+graph.add_edge(1, 2, -4)
+graph.add_edge(2, 3, 1)
 
-for graph_size in graph_sizes:
-    dijkstra_time = calc_time(dijkstra, graph_size, densities, k)
-    bellman_ford_time = calc_time(bellman_ford, graph_size, densities, k)
-    dijkstra_times.append(dijkstra_time)
-    bellman_ford_times.append(bellman_ford_time)
+# Test Bellman-Ford algorithm
+has_negative_cycle, distances, paths = graph.bellman_ford('A', 2)
 
-# Plotting the results
-plt.plot(graph_sizes, dijkstra_times, label="Dijkstra's Algorithm")
-plt.plot(graph_sizes, bellman_ford_times, label="Bellman-Ford Algorithm")
-plt.xlabel('Graph Size')
-plt.ylabel('Execution Time (seconds)')
-plt.title('Execution Time Comparison for Different Graph Sizes')
-plt.legend()
-plt.grid(True)
-plt.show()
+if has_negative_cycle:
+    print("Graph contains a negative cycle.")
+else:
+    print("Shortest distances from vertex A:")
+    for vertex_data, distance in zip(graph.vertex_data, distances):
+        print(f"{vertex_data}: {distance}")
+    print("\nShortest paths from vertex A:")
+    for vertex, path in paths.items():
+        print(f"To {graph.vertex_data[vertex]}: {' -> '.join(path)}")
 
-# Parameters for the second experiment:
-graph_size = 50  # Fixed graph size
-densities = 0.5  # Fixed density
-
-# Experiment for different relaxation limits (k):
-ks = list(range(1, 16))
-dijkstra_times = []
-bellman_ford_times = []
-
-for k in ks:
-    dijkstra_time = calc_time(dijkstra, graph_size, densities, k)
-    bellman_ford_time = calc_time(bellman_ford, graph_size, densities, k)
-    dijkstra_times.append(dijkstra_time)
-    bellman_ford_times.append(bellman_ford_time)
-
-# Plotting the results
-plt.plot(ks, dijkstra_times, label="Dijkstra's Algorithm")
-plt.plot(ks, bellman_ford_times, label="Bellman-Ford Algorithm")
-plt.xlabel('Relaxation Limit (k)')
-plt.ylabel('Execution Time (seconds)')
-plt.title('Execution Time Comparison for Different Relaxation Limits')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# Parameters for the third experiment:
-graph_size = 50  # Fixed graph size
-k = 3  # Fixed relaxation limit
-
-# Experiment for different densities:
-densities = [i / 10 for i in range(1, 10)]
-dijkstra_times = []
-bellman_ford_times = []
-
-for density in densities:
-    dijkstra_time = calc_time(dijkstra, graph_size, density, k)
-    bellman_ford_time = calc_time(bellman_ford, graph_size, density, k)
-    dijkstra_times.append(dijkstra_time)
-    bellman_ford_times.append(bellman_ford_time)
-
-# Plotting the results
-plt.plot(densities, dijkstra_times, label="Dijkstra's Algorithm")
-plt.plot(densities, bellman_ford_times, label="Bellman-Ford Algorithm")
-plt.xlabel('Density')
-plt.ylabel('Execution Time (seconds)')
-plt.title('Execution Time Comparison for Different Densities')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-
-"""We write three different experiments calculating space complexity
-for different variables:- First graph size, second relaxation limit and third density."""
-
-#For various graph sizes:-
-sizes = range(5, 101, 5)
-density = 0.5
-relaxation_limit = 5
-
-dijkstra_usage_s = []
-bellman_ford_usage_s = []
-
-for size in sizes:
-    graph = generate_random_graph(size, density)
-    dijkstra_usage_s.append(measure_space_complexity_dijkstra(graph, 0, relaxation_limit))
-    bellman_ford_usage_s.append(measure_space_complexity_bellman_ford(graph, 0, relaxation_limit))
-
-plt.plot(sizes, dijkstra_usage_s, label="Dijkstra")
-plt.plot(sizes, bellman_ford_usage_s, label="Bellman-Ford")
-plt.xlabel("Graph Size (Number of Vertices)")
-plt.ylabel("Space Usage (Bytes)")
-plt.title("Space Complexity vs. Graph Size")
-plt.legend()
-plt.show()
-
-
-#For various relaxation limits:-
-dijkstra_usage_rl = []
-bellman_ford_usage_rl = []
-
-graph_size = 50
-density = 0.5
-
-relaxation_limits = range(1, 16)
-space_usage = []
-for limit in relaxation_limits:
-    graph = generate_random_graph(graph_size, density)
-    dijkstra_usage_rl.append(measure_space_complexity_dijkstra(graph, 0, limit))
-    bellman_ford_usage_rl.append(measure_space_complexity_bellman_ford(graph, 0, limit))
-
-plt.plot(relaxation_limits, dijkstra_usage_rl, label="Dijkstra")
-plt.plot(relaxation_limits, bellman_ford_usage_rl, label="Bellman-Ford")
-plt.xlabel("Relaxation Limit (k)")
-plt.ylabel("Space Usage (Bytes)")
-plt.title("Space Complexity vs. Relaxation limit")
-plt.legend()
-plt.show()
-
-#For various densities:-
-dijkstra_usage_d = []
-bellman_ford_usage_d = []
-
-graph_size = 50
-relaxation_limit = 5 
-
-densities = [0.1 * i for i in range(1, 10)]  # 0.1 to 0.9
-space_usage = []
-for density in densities:
-    graph = generate_random_graph(size, density)
-    dijkstra_usage_d.append(measure_space_complexity_dijkstra(graph, 0, relaxation_limit))
-    bellman_ford_usage_d.append(measure_space_complexity_bellman_ford(graph, 0, relaxation_limit))
-
-plt.plot(densities, dijkstra_usage_d, label="Dijkstra")
-plt.plot(densities, bellman_ford_usage_d, label="Bellman-Ford")
-plt.xlabel("Densities")
-plt.ylabel("Space Usage (Bytes)")
-plt.title("Space Complexity vs. Densities")
-plt.legend()
-plt.show()
-
-"""We write three different experiments calculating accuracy
-for different variables:- First graph size, second relaxation limit and third density."""
-#First experiment for different graph sizes:-
-graph_size = 50
-density = 0.5
-sizes = range(5, 101, 5) 
-density = 0.5  # Ensure density allows for valid paths 
-relaxation_limit = 5 
-
-dijkstra_accuracy_size = []
-bellman_ford_accuracy_size = []
-
-for size in sizes:
-    graph = generate_random_graph(size, density)
-    dijkstra_accuracy_size.append(measure_accuracy(graph, 0, 'dijkstra', relaxation_limit))
-    bellman_ford_accuracy_size.append(measure_accuracy(graph, 0, 'bellman_ford', relaxation_limit))
-
-plt.plot(sizes, dijkstra_accuracy_size, label="Dijkstra")
-plt.plot(sizes, bellman_ford_accuracy_size, label="Bellman-Ford")
-plt.xlabel("Sizes")
-plt.ylabel("Accuracy")
-plt.title("Accuracy vs. Sizes")
-plt.legend()
-plt.show()
-
-
-#Second experiment for different relaxation limits:-
-graph_size = 50 
-density = 0.5
-relaxation_limits = range(1, 16)
-
-dijkstra_accuracy = []
-bellman_ford_accuracy = []
-
-for limits in relaxation_limits:
-    graph = generate_random_graph(graph_size, density)
-    dijkstra_accuracy.append(measure_accuracy(graph, 0, 'dijkstra', limits))
-    bellman_ford_accuracy.append(measure_accuracy(graph, 0, 'bellman_ford', limits))
-
-plt.plot(relaxation_limits, dijkstra_accuracy, label="Dijkstra")
-plt.plot(relaxation_limits, bellman_ford_accuracy, label="Bellman-Ford")
-plt.xlabel("Relaxation Limit (k)")
-plt.ylabel("Accuracy")
-plt.title("Accuracy vs. Relaxation Limit")
-plt.legend()
-plt.show()
-
-#Third experiment for different densities:-
-densities = [0.1 * i for i in range(1, 10)]  # Densities from 0.1 to 0.9
-graph_size = 50  # Fixed graph size
-relaxation_limit = 5 
-
-dijkstra_accuracy = []
-bellman_ford_accuracy = []
-
-for density in densities:
-    graph = generate_random_graph(graph_size, density)
-    dijkstra_accuracy.append(measure_accuracy(graph, 0, 'dijkstra', relaxation_limit))
-    bellman_ford_accuracy.append(measure_accuracy(graph, 0, 'bellman_ford', relaxation_limit))
-
-plt.plot(densities, dijkstra_accuracy, label="Dijkstra")
-plt.plot(densities, bellman_ford_accuracy, label="Bellman-Ford")
-plt.xlabel("Density")
-plt.ylabel("Accuracy")
-plt.title("Accuracy vs. Density")
-plt.legend()
-plt.show()
+distancesd, pathsd = graph.dijkstra('A', 2) 
+print("Shortest distances from vertex A:")
+for vertex_data, distance in zip(graph.vertex_data, distancesd):
+    print(f"{vertex_data}: {distance}")
+print("\nShortest paths from vertex A:")
+for vertex, path in pathsd.items():
+    print(f"To {graph.vertex_data[vertex]}: {' -> '.join(path)}")
