@@ -80,7 +80,7 @@ def dijkstra(graph, start, end):
     pq.put(start, 0)
     
     while not pq.is_empty():
-        _, current_node = pq.delete_min()  # Adjusted to work with the tuple (priority, node)
+        _, current_node = pq.delete_min() 
         
         if current_node == end:
             break
@@ -90,15 +90,14 @@ def dijkstra(graph, start, end):
             if alt_route < distance[neighbor]:
                 distance[neighbor] = alt_route
                 predecessor[neighbor] = current_node
-                pq.put(neighbor, alt_route)  # Use the adjusted put method
+                pq.put(neighbor, alt_route)  
                 
-    # Reconstruct path from end to start using predecessors
     path = []
     current = end
     while current is not None:
         path.append(current)
         current = predecessor[current]
-    path.reverse()  # Reverse the path to start from the beginning
+    path.reverse() 
     
     return distance[end], path
 
@@ -117,16 +116,12 @@ def euclidean_distance(coord1, coord2):
     """
     lat1, lon1 = coord1
     lat2, lon2 = coord2
-    
-    # Convert latitudes and longitudes from degrees to radians
+
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    
-    # Calculate differences
+
     delta_lat = lat2 - lat1
     delta_lon = lon2 - lon1
-    
-    # Simplify: Treat these differences as Cartesian distances
-    # Note: This is a rough approximation and works better for short distances
+
     distance = sqrt(delta_lat**2 + delta_lon**2)
     
     return distance
@@ -277,7 +272,6 @@ def count_line_changes(path, connections):
     station_pairs_to_lines = {}
     for conn in connections:
         station1, station2, line, _ = conn
-        # Manually check and add to the dictionary
         if (station1, station2) not in station_pairs_to_lines:
             station_pairs_to_lines[(station1, station2)] = set()
         station_pairs_to_lines[(station1, station2)].add(line)
@@ -292,14 +286,13 @@ def count_line_changes(path, connections):
         station1, station2 = path[i], path[i + 1]
         possible_lines = station_pairs_to_lines.get((station1, station2), set())
         
-        # Manually checking if the current line is a possible line for the next segment
+
         if current_line not in possible_lines:
-            # Manually picking a new current line if the current one isn't possible
+  
             for line in possible_lines:
                 current_line = line
-                break  # Break after setting to the first found line
+                break  
             
-            # Increment line_changes if it's not the first segment
             if i > 0:
                 line_changes += 1
                 
@@ -335,7 +328,6 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     #plt.show()
     plt.savefig('performance_comparison.png')
     
-    
 station_pairs = [
     (1, 234),  # Short distance
     (10, 150),  # Medium distance
@@ -352,31 +344,56 @@ station_pairs = [
     (6,70)
 
 ]
+station_pairs_same_line = [
+    (1, 234),  # Short distance
+    (10, 150),  # Medium distance
+    (50, 200),  # Long distance
+    (11, 212),  # Same Line, Short Distance
+    (13, 301),  # Same Line, Long Distance
+    (11, 87),   # Different Lines, No Transfers
+    (3, 295),   # Different Lines, Multiple Transfers
+    (117, 42),  # Heathrow Terminals 1, 2 & 3 to Canary Wharf
+    (282, 247), # Wembley Park to Stratford
+    (88, 299),  # Epping to Wimbledon
+    (35, 192),  # Brixton to Oxford Circus
+    (280, 167),  # Watford to Moorgate
+    (6,70)
 
+]
+station_pairs_adjacent_lines = []
+station_pairs_multiple_transfers = []
 # Collect data
 labels = []
-dijkstra_times = []
-astar_times = []
-line_changes_list = []
+dijkstra_times_same_line = []
+astar_times_same_line = []
+dijkstra_times_adjacent_lines = []
+astar_times_adjacent_lines = []
+dijkstra_times_multiple_transfers = []
+astar_times_multiple_transfers = []
 
 print("Time Comparison between Dijkstra's and A* Algorithms:")
 print("---------------------------------------------------------------------------------------------------")
-for start_id, end_id in station_pairs:
+for start_id, end_id in station_pairs_same_line:
     # Adjust to unpack all four returned values
     dijkstra_time,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
     astar_time,_ = measure_performance(graph, start_id, end_id, heuristic)
     # Append data to lists for plotting and analysis
     labels.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
-    dijkstra_times.append(dijkstra_time)
-    astar_times.append(astar_time)
+    dijkstra_times_same_line.append(dijkstra_time)
+    astar_times_same_line.append(astar_time)
     
     # Optionally print out the information for verification
     print(f"Pair: {labels[-1]}, Dijkstra Time: {dijkstra_time:.6f}, A* Time: {astar_time:.6f}")
 print("---------------------------------------------------------------------------------------------------")
 
 
-plot_performance_comparison(labels, dijkstra_times, astar_times)
+plot_performance_comparison(labels, dijkstra_times_same_line, astar_times_same_line)
 
+
+
+
+
+line_changes_list = []
 print("Line Change Comparison between Dijkstra's and A* Algorithms:")
 print("---------------------------------------------------------------------------------------------------" )
 for (start_id, end_id), label in zip(station_pairs, labels):
