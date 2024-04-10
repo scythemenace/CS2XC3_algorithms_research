@@ -38,7 +38,6 @@ class WeightedGraph(Graph):
     def __init__(self):
         super().__init__()
         self.edges = {} 
-
     def add_edge(self, src: int, dst: int, weight: float):
         if src not in self.edges:
             self.edges[src] = {}
@@ -60,7 +59,7 @@ class HeuristicGraph(WeightedGraph):
         super().__init__()
         self._heuristic = _heuristic
 
-    def get_heuristic(self, node): 
+    def get_heuristic(self, node) -> Dict[int, float]: 
         return self._heuristic.get(node, float('inf'))
 
 class SPAlgorithm(ABC):
@@ -68,7 +67,7 @@ class SPAlgorithm(ABC):
         self.graph = graph
 
     @abstractmethod
-    def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
+    def calc_sp(self, source: int, dest: int) -> float:
         pass
 
 class Dijkstra(SPAlgorithm):
@@ -78,7 +77,7 @@ class Dijkstra(SPAlgorithm):
     def calc_sp(self, source, dest) -> float:
         distance = {vertex: float('infinity') for vertex in self.graph.nodes}
         distance[source] = 0
-        pq = MinPriorityQueue()  # Use MinPriorityQueue
+        pq = MinPriorityQueue() 
         pq.put(source, 0)
         visited = set()
         predecessor = {vertex: None for vertex in self.graph.nodes}
@@ -204,6 +203,8 @@ class BellmanFord(SPAlgorithm):
 
         return distances[dest] if distances[dest] != float('inf') else None
 
+
+# For A* and Dijkstra
 class MinPriorityQueue:
     def __init__(self):
         self.heap = []
@@ -265,7 +266,7 @@ class ShortPathFinder:
         self.graph = graph
         self.algo = algo
 
-    def calc_short_path(self, source: int, dest: int) -> Tuple[List[int], float]:
+    def calc_short_path(self, source: int, dest: int) -> float:
         return self.algo.calc_sp(source, dest)
 
     def set_graph(self, graph: Graph):
@@ -359,9 +360,54 @@ def test_a_star_adapter():
     graph4.add_edge(0, 3, 3)
     a_star4 = A_Star_Adapter(graph4)
     print(a_star4.calc_sp(0, 3))  # Expected: ([0, 3], 3)
+def test_a_star_simple_weighted_graph():
+    heuristic = {0: 3, 1: 2, 2: 1, 3: 0}
+    graph = HeuristicGraph(heuristic)
+    graph.add_edge(0, 1, 1)
+    graph.add_edge(1, 2, 1)
+    graph.add_edge(2, 3, 1)
+    graph.add_edge(0, 3, 4)
+
+    a_star_algo = A_Star_Adapter(graph)
+    finder = ShortPathFinder(graph, a_star_algo)
+
+    cost = finder.calc_short_path(0, 3)
+    print("Test A* Simple Weighted Graph:", "Passed" if cost == 3 else "Failed", "- Cost:", cost)
+def test_bellman_ford_no_negative_cycle():
+    graph = WeightedGraph()
+    graph.add_edge(0, 1, 5)
+    graph.add_edge(1, 2, 3)
+    graph.add_edge(2, 0, 2)
+
+    bellman_ford_algo = BellmanFord(graph)
+    finder = ShortPathFinder(graph, bellman_ford_algo)
+
+    cost = finder.calc_short_path(0, 2)
+    print("Test Bellman-Ford No Negative Cycle:", "Passed" if cost == 8 else "Failed", "- Cost:", cost)
+def test_sp_algorithm_variety_graph_types():
+    graph = WeightedGraph()
+    graph.add_edge(0, 1, 2)
+    graph.add_edge(1, 2, 2)
+
+    # Dijkstra
+    dijkstra_algo = Dijkstra(graph)
+    finder = ShortPathFinder(graph, dijkstra_algo)
+    cost_dijkstra = finder.calc_short_path(0, 2)
+
+    # Bellman-Ford
+    bellman_ford_algo = BellmanFord(graph)
+    finder.set_algorithm(bellman_ford_algo)
+    cost_bellman = finder.calc_short_path(0, 2)
+
+    print("Test SPAlgorithm with Dijkstra and Bellman-Ford:", "Passed" if cost_dijkstra == cost_bellman == 4 else "Failed", "- Dijkstra Cost:", cost_dijkstra, "- Bellman-Ford Cost:", cost_bellman)
+
 
 
 test_dijkstra_simple_path()
 test_dijkstra_disconnected_graph()
 test_bellman_ford_negative_cycle()
 test_a_star_adapter()
+test_a_star_simple_weighted_graph()
+test_bellman_ford_no_negative_cycle()
+test_sp_algorithm_variety_graph_types()
+
