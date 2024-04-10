@@ -299,7 +299,7 @@ def count_line_changes(path, connections):
     return line_changes
 
 
-def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijkstra vs A* Execution Time'):
+def plot_performance_comparison(labels, dijkstra, astar, title, image_name):
     """
     Plots a comparison of execution times between Dijkstra's and A* algorithms.
 
@@ -309,14 +309,13 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     - astar_times: List of execution times for A* algorithm.
     - title: (Optional) Title for the plot.
     """
-    x = range(len(labels))  # the label locations
-    width = 0.35  # the width of the bars
+    x = range(len(labels))
+    width = 0.35  
 
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x, dijkstra_times, width, label='Dijkstra')
-    rects2 = ax.bar([p + width for p in x], astar_times, width, label='A*')
+    rects1 = ax.bar(x, dijkstra, width, label='Dijkstra')
+    rects2 = ax.bar([p + width for p in x], astar, width, label='A*')
 
-    # Add some text for labels, title, and custom x-axis tick labels, etc.
     ax.set_ylabel('Execution Time (seconds)')
     ax.set_title(title)
     ax.set_xticks([p + width / 2 for p in x])
@@ -326,8 +325,95 @@ def plot_performance_comparison(labels, dijkstra_times, astar_times, title='Dijk
     fig.tight_layout()
 
     #plt.show()
-    plt.savefig('performance_comparison.png')
+    plt.savefig(image_name)
     
+
+station_pairs_same_line = [
+    (11,163),
+    (11,212),
+    (49,87),
+    (49,197),
+    (82,193),
+    (84,148),
+    (113,246),
+    (113,298),
+    (114,140),
+    (137, 298),
+    (140,237)
+]
+station_pairs_adjacent_lines = [
+    
+    
+    
+    
+    
+]
+station_pairs_multiple_transfers = [
+    (11,249),
+    (7,145),
+    (8,124),
+    (12,56),
+    (12,257),
+    (84,136),
+    (1,234),
+    (5,194),
+    (9,232),
+    (10,95),
+    (26,274)
+    
+]
+# Collect data
+labels_same_line = []
+dijkstra_times_same_line = []
+astar_times_same_line = []
+
+
+print("Time Comparison between Dijkstra's and A* Algorithms: same line")
+print("---------------------------------------------------------------------------------------------------")
+for start_id, end_id in station_pairs_same_line:
+
+    dijkstra_time1,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
+    astar_time1,_ = measure_performance(graph, start_id, end_id, heuristic)
+    labels_same_line.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
+    dijkstra_times_same_line.append(dijkstra_time1)
+    astar_times_same_line.append(astar_time1)
+    
+
+    print(f"Pair: {labels_same_line[-1]}, Dijkstra Time: {dijkstra_time1:.6f}, A* Time: {astar_time1:.6f}")
+print("---------------------------------------------------------------------------------------------------")
+
+plot_performance_comparison(labels_same_line, dijkstra_times_same_line, astar_times_same_line, "Performance Comparison: Same Line", "same_line.png")
+
+dijkstra_times_adjacent_lines = []
+astar_times_adjacent_lines = []
+labels_adjacent_lines = []
+print("Time Comparison between Dijkstra's and A* Algorithms: Ajacent Line transfers")
+print("---------------------------------------------------------------------------------------------------")
+
+
+print("---------------------------------------------------------------------------------------------------")
+
+
+dijkstra_times_multiple_transfers = []
+astar_times_multiple_transfers = []
+labels_multiple_transfers = []  
+print("Time Comparison between Dijkstra's and A* Algorithms: Multiple Line transfers")
+print("---------------------------------------------------------------------------------------------------")
+for start_id, end_id in station_pairs_multiple_transfers:
+
+    dijkstra_time2,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
+    astar_time2,_ = measure_performance(graph, start_id, end_id, heuristic)
+    labels_multiple_transfers.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
+    dijkstra_times_multiple_transfers.append(dijkstra_time2)
+    astar_times_multiple_transfers.append(astar_time2)
+    
+
+    print(f"Pair: {labels_multiple_transfers[-1]}, Dijkstra Time: {dijkstra_time2:.6f}, A* Time: {astar_time2:.6f}")
+print("---------------------------------------------------------------------------------------------------")
+
+plot_performance_comparison(labels_multiple_transfers, dijkstra_times_multiple_transfers, astar_times_multiple_transfers, "Performance Comparison: Multiple Transfers", "multiple_transfer.png")
+
+
 station_pairs = [
     (1, 234),  # Short distance
     (10, 150),  # Medium distance
@@ -344,53 +430,6 @@ station_pairs = [
     (6,70)
 
 ]
-station_pairs_same_line = [
-    (1, 234),  # Short distance
-    (10, 150),  # Medium distance
-    (50, 200),  # Long distance
-    (11, 212),  # Same Line, Short Distance
-    (13, 301),  # Same Line, Long Distance
-    (11, 87),   # Different Lines, No Transfers
-    (3, 295),   # Different Lines, Multiple Transfers
-    (117, 42),  # Heathrow Terminals 1, 2 & 3 to Canary Wharf
-    (282, 247), # Wembley Park to Stratford
-    (88, 299),  # Epping to Wimbledon
-    (35, 192),  # Brixton to Oxford Circus
-    (280, 167),  # Watford to Moorgate
-    (6,70)
-
-]
-station_pairs_adjacent_lines = []
-station_pairs_multiple_transfers = []
-# Collect data
-labels = []
-dijkstra_times_same_line = []
-astar_times_same_line = []
-dijkstra_times_adjacent_lines = []
-astar_times_adjacent_lines = []
-dijkstra_times_multiple_transfers = []
-astar_times_multiple_transfers = []
-
-print("Time Comparison between Dijkstra's and A* Algorithms:")
-print("---------------------------------------------------------------------------------------------------")
-for start_id, end_id in station_pairs_same_line:
-    # Adjust to unpack all four returned values
-    dijkstra_time,_ = measure_performance(graph, start_id, end_id, lambda x, y: 0)
-    astar_time,_ = measure_performance(graph, start_id, end_id, heuristic)
-    # Append data to lists for plotting and analysis
-    labels.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
-    dijkstra_times_same_line.append(dijkstra_time)
-    astar_times_same_line.append(astar_time)
-    
-    # Optionally print out the information for verification
-    print(f"Pair: {labels[-1]}, Dijkstra Time: {dijkstra_time:.6f}, A* Time: {astar_time:.6f}")
-print("---------------------------------------------------------------------------------------------------")
-
-
-plot_performance_comparison(labels, dijkstra_times_same_line, astar_times_same_line)
-
-
-
 
 
 line_changes_list = []
@@ -399,14 +438,12 @@ print("-------------------------------------------------------------------------
 for (start_id, end_id), label in zip(station_pairs, labels):
     _, dijkstra_path = dijkstra(graph, start_id, end_id)
     _, astar_path = A_Star(graph, start_id, end_id, heuristic)
-    
-    # Calculate line changes for each path
+   
     dijkstra_line_changes = count_line_changes(dijkstra_path, connections)
     astar_line_changes = count_line_changes(astar_path, connections)
     
     line_changes_list.append((dijkstra_line_changes, astar_line_changes))
-    
-    # Print using the correct label for each station pair
+
     print(f"Pair: {label}, Dijkstra Line Changes: {dijkstra_line_changes}, A* Line Changes: {astar_line_changes}")
     
     
