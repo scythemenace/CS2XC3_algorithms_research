@@ -227,6 +227,7 @@ connections = parse_connections(connections_file_path)
 
 
 
+
 def build_graph(connections):
     """
     Builds a graph from a list of connections.
@@ -251,6 +252,7 @@ def build_graph(connections):
         # Add the edge from station1 to station2 and vice versa
         graph[station1][station2] = time
         graph[station2][station1] = time  # Assuming bidirectional connections
+
     return graph
 
 
@@ -347,6 +349,7 @@ station_pairs = [
     (88, 299),  # Epping to Wimbledon
     (35, 192),  # Brixton to Oxford Circus
     (280, 167),  # Watford to Moorgate
+    (6,70)
 
 ]
 

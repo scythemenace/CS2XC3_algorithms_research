@@ -78,7 +78,7 @@ def A_Star(graph, source, destination, heuristic):
 
     path = reconstruct_path(predecessors, source, destination)
     if not path:
-        return predecessors, path, "Destination not reachable"
+        return predecessors, path, float('inf')
 
     return predecessors, path,costs [destination]
 

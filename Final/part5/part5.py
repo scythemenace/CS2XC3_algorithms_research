@@ -4,7 +4,7 @@ from typing import Dict, Tuple, List
 
 class Graph(ABC):
     def __init__(self):
-        self.edges = {}  # Stores adjacency list
+        self.edges = {}  
         
     @property
     def nodes(self):
@@ -20,7 +20,7 @@ class Graph(ABC):
         if dst not in self.edges:
             self.add_node(dst)
         self.edges[src].append(dst)
-        self.edges[dst].append(src)  # Assuming undirected graph for simplicity
+        self.edges[dst].append(src) 
 
     def get_num_of_nodes(self) -> int:
         return len(self.edges)
@@ -30,14 +30,14 @@ class Graph(ABC):
 
     @abstractmethod
     def w(self, node: int) -> float:
-        # Abstract method, should be implemented in child classes
+
         pass
 
     
 class WeightedGraph(Graph):
     def __init__(self):
         super().__init__()
-        self.edges = {}  # Overrides the base class to use a dict for weighted edges
+        self.edges = {} 
 
     def add_edge(self, src: int, dst: int, weight: float):
         if src not in self.edges:
@@ -45,13 +45,13 @@ class WeightedGraph(Graph):
         if dst not in self.edges:
             self.edges[dst] = {}
         self.edges[src][dst] = weight
-        self.edges[dst][src] = weight  # Assuming undirected graph for simplicity
+        self.edges[dst][src] = weight 
 
     def w(self, node1: int, node2: int) -> float:
         try:
             return self.edges[node1][node2]
         except KeyError:
-            return float('inf')  # No edge exists
+            return float('inf')  
 
 
 
@@ -75,7 +75,7 @@ class Dijkstra(SPAlgorithm):
     def __init__(self, graph: WeightedGraph):
         super().__init__(graph)
     
-    def calc_sp(self, source, dest):
+    def calc_sp(self, source, dest) -> float:
         distance = {vertex: float('infinity') for vertex in self.graph.nodes}
         distance[source] = 0
         pq = MinPriorityQueue()  # Use MinPriorityQueue
@@ -84,7 +84,7 @@ class Dijkstra(SPAlgorithm):
         predecessor = {vertex: None for vertex in self.graph.nodes}
         
         while not pq.is_empty():
-            _, current_vertex = pq.delete_min()  # Adjusted for MinPriorityQueue
+            _, current_vertex = pq.delete_min()  
             
             if current_vertex in visited:
                 continue
@@ -99,7 +99,7 @@ class Dijkstra(SPAlgorithm):
                 alt_route = distance[current_vertex] + self.graph.w(current_vertex, neighbor)
                 if alt_route < distance[neighbor]:
                     distance[neighbor] = alt_route
-                    pq.put(neighbor, alt_route)  # Use put method of MinPriorityQueue
+                    pq.put(neighbor, alt_route) 
                     predecessor[neighbor] = current_vertex
         
         # Reconstruct path
@@ -110,8 +110,7 @@ class Dijkstra(SPAlgorithm):
             current = predecessor[current]
         path.reverse()
         
-        return path, distance[dest] if distance[dest] != float('infinity') else float('inf')
-
+        return distance[dest] if distance[dest] != float('infinity') else float('inf')
 
 
 class A_Star_Adapter(SPAlgorithm):
@@ -119,7 +118,7 @@ class A_Star_Adapter(SPAlgorithm):
         super().__init__(heuristic_graph)
         self.heuristic_graph = heuristic_graph
 
-    def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
+    def calc_sp(self, source: int, dest: int) -> float:
         graph = {node: {} for node in self.heuristic_graph.nodes}
         for node, neighbors in self.heuristic_graph.edges.items():
             for neighbor, weight in neighbors.items():
@@ -127,20 +126,14 @@ class A_Star_Adapter(SPAlgorithm):
         
         heuristic = {node: self.heuristic_graph.get_heuristic(node) for node in self.heuristic_graph.nodes}
 
-        path, cost = self.a_star_algorithm(graph, source, dest, heuristic)  # Make sure this returns the correct values
 
-        if not path:  # Checks if path is empty or not found
-            return [], float('inf')
+        _, cost = self.a_star_algorithm(graph, source, dest, heuristic)
 
-        # Assuming 'path' is a list of nodes representing the shortest path
-        path_cost = sum([self.heuristic_graph.w(path[i], path[i + 1]) for i in range(len(path) - 1)])
-
-        
-        return path, path_cost
+        return cost
 
     def a_star_algorithm(self, graph, source, destination, heuristic):
         open_list = MinPriorityQueue()
-        open_list.put(source, heuristic[source])  # Initially, the cost to reach the source is just the heuristic
+        open_list.put(source, heuristic[source])  
         predecessors = {source: None}
         costs = {source: 0}
 
@@ -148,17 +141,23 @@ class A_Star_Adapter(SPAlgorithm):
             _, current = open_list.delete_min()
 
             if current == destination:
+
                 break
 
             for neighbor, weight in graph[current].items():
                 new_cost = costs[current] + weight
                 if neighbor not in costs or new_cost < costs[neighbor]:
                     costs[neighbor] = new_cost
-                    priority = new_cost + heuristic[neighbor]
+                    priority = new_cost + heuristic[neighbor] 
                     open_list.put(neighbor, priority)
                     predecessors[neighbor] = current
 
-        return self.reconstruct_path(predecessors, source, destination), costs.get(destination, float('inf'))
+
+        if destination not in costs:
+            return [], float('inf')  
+
+
+        return self.reconstruct_path(predecessors, source, destination), costs[destination]
 
     def reconstruct_path(self, predecessors, start, end):
         path = []
@@ -166,23 +165,22 @@ class A_Star_Adapter(SPAlgorithm):
         while current != start and current is not None:
             path.append(current)
             current = predecessors.get(current)
-        if current is None:  # If start node wasn't reached
+        if current is None: 
             return [], float('inf')
-        path.append(start)  # Add the start node
+        path.append(start)
         path.reverse()
         return path
 
 
 
+
     
 class BellmanFord(SPAlgorithm):
-    def calc_sp(self, source: int, dest: int) -> Tuple[List[int], float]:
-        # Initialize distance to all vertices as infinite and distance to source as 0
+    def calc_sp(self, source: int, dest: int) -> float:
         distances = {v: float('inf') for v in self.graph.nodes}
         predecessors = {v: None for v in self.graph.nodes}
         distances[source] = 0
 
-        # Relax edges repeatedly
         for _ in range(len(self.graph.nodes) - 1):
             for src in self.graph.edges:
                 for dst, weight in self.graph.edges[src].items():
@@ -190,13 +188,13 @@ class BellmanFord(SPAlgorithm):
                         distances[dst] = distances[src] + weight
                         predecessors[dst] = src
 
-        # Check for negative-weight cycles
+
         for src in self.graph.edges:
             for dst, weight in self.graph.edges[src].items():
                 if distances[src] + weight < distances[dst]:
                     raise ValueError("Graph contains a negative-weight cycle")
 
-        # Reconstruct the path from source to dest
+
         path = []
         current = dest
         while current is not None:
@@ -204,7 +202,7 @@ class BellmanFord(SPAlgorithm):
             current = predecessors[current]
         path.reverse()
 
-        return path, distances[dest] if distances[dest] != float('inf') else None
+        return distances[dest] if distances[dest] != float('inf') else None
 
 class MinPriorityQueue:
     def __init__(self):
@@ -225,7 +223,7 @@ class MinPriorityQueue:
 
     def delete_min(self):
         if len(self.heap) == 0:
-            return None  # Handle empty queue case
+            return None
 
         self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
         min_val = self.heap.pop()
@@ -289,7 +287,7 @@ def create_test_graph():
     return graph
 
 def create_heuristic_graph():
-    heuristic = {1: 9, 2: 7, 3: 4, 4: 2, 5: 0}  # Example heuristic, assuming 5 is the goal
+    heuristic = {1: 9, 2: 7, 3: 4, 4: 2, 5: 0}  
     graph = HeuristicGraph(heuristic)
     graph.add_edge(1, 2, 1.0)
     graph.add_edge(2, 3, 2.0)
@@ -302,21 +300,18 @@ def test_dijkstra_simple_path():
     graph = create_test_graph()
     dijkstra_algo = Dijkstra(graph)
     finder = ShortPathFinder(graph, dijkstra_algo)
-    path, cost = finder.calc_short_path(1, 5)
-    print(path, cost)
-
-
-
-
+    cost = finder.calc_short_path(1, 5) 
+    print(cost)  
 
 def test_dijkstra_disconnected_graph():
     graph = WeightedGraph()
     graph.add_edge(1, 2, 1.0)
-    graph.add_edge(3, 4, 1.0)  # Disconnected component
+    graph.add_edge(3, 4, 1.0)  
     dijkstra_algo = Dijkstra(graph)
     finder = ShortPathFinder(graph, dijkstra_algo)
-    path, cost = finder.calc_short_path(1, 4)
-    print(path, cost)
+    cost = finder.calc_short_path(1, 4)
+    print(cost)  
+
 
 def test_bellman_ford_negative_cycle():
     graph = WeightedGraph()
@@ -326,7 +321,7 @@ def test_bellman_ford_negative_cycle():
     bellman_ford_algo = BellmanFord(graph)
     finder = ShortPathFinder(graph, bellman_ford_algo)
     try:
-        path, cost = finder.calc_short_path(1, 3)
+        cost = finder.calc_short_path(1, 3)
         assert False, "Negative cycle detection failed"
     except ValueError as e:
         assert str(e) == "Graph contains a negative-weight cycle", "Incorrect error message"
