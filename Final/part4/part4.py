@@ -1,6 +1,6 @@
 
 import csv
-from math import radians, sqrt
+from math import sqrt
 import time
 import matplotlib.pyplot as plt
 
@@ -102,10 +102,10 @@ def dijkstra(graph, start, end):
     return distance[end], path
 
 
-
 def euclidean_distance(coord1, coord2):
     """
-    Calculate the Euclidean distance between two points in a plane.
+    Calculate the Euclidean distance between two points in a plane, treating latitude and longitude
+    as Cartesian coordinates. This is an approximation and does not account for the Earth's curvature.
     
     Parameters:
     - coord1: Tuple containing (latitude, longitude) of the first point.
@@ -117,10 +117,8 @@ def euclidean_distance(coord1, coord2):
     lat1, lon1 = coord1
     lat2, lon2 = coord2
 
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-
-    delta_lat = lat2 - lat1
-    delta_lon = lon2 - lon1
+    delta_lat = lat1 - lat2
+    delta_lon = lon1 - lon2
 
     distance = sqrt(delta_lat**2 + delta_lon**2)
     
@@ -223,35 +221,40 @@ connections = parse_connections(connections_file_path)
 
 
 
-def build_graph(connections):
+def build_graph(stations, connections):
     """
-    Builds a graph from a list of connections.
-    Each connection is a tuple (station1, station2, time).
-
+    Builds a graph from a list of connections, where the edges represent
+    physical distances between stations instead of travel times.
+    
     Parameters:
-    - connections: A list of tuples, where each tuple contains
-      (station1, station2, time).
-
+    - stations: A dictionary of stations with their IDs as keys and 
+                their latitude and longitude as values.
+    - connections: A list of tuples, each containing (station1_id, station2_id, _, _).
+                   The last two elements are ignored in this context.
+    
     Returns:
-    - A dictionary representing the graph, where keys are station IDs
-      and values are dictionaries of neighboring stations and their respective times.
+    - A dictionary representing the graph, with station IDs as keys and 
+      dictionaries of neighboring stations (and their distances) as values.
     """
     graph = {}
 
-    for station1, station2, _, time in connections:
+    for station1, station2, _, _ in connections:  # Ignore line and time data
         if station1 not in graph:
             graph[station1] = {}
         if station2 not in graph:
             graph[station2] = {}
 
-        # Add the edge from station1 to station2 and vice versa
-        graph[station1][station2] = time
-        graph[station2][station1] = time  # Assuming bidirectional connections
+        coord1 = (stations[station1]['latitude'], stations[station1]['longitude'])
+        coord2 = (stations[station2]['latitude'], stations[station2]['longitude'])
+        distance = euclidean_distance(coord1, coord2)
 
-    return graph
+        graph[station1][station2] = distance
+        graph[station2][station1] = distance
+        sorted_graph = {k: graph[k] for k in sorted(graph)}
+    return sorted_graph
 
 
-graph = build_graph(connections)
+graph = build_graph(stations, connections)
 
 
 def measure_performance(graph, start_id, end_id, heuristic):
@@ -260,7 +263,6 @@ def measure_performance(graph, start_id, end_id, heuristic):
     dijkstra(graph, start_id, end_id)
     dijkstra_time = time.time() - start_time
 
-    # Measure A* algorithm performance
     start_time = time.time()
     A_Star(graph, start_id, end_id, heuristic)
     astar_time = time.time() - start_time
@@ -377,8 +379,6 @@ for start_id, end_id in station_pairs_same_line:
     labels_same_line.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
     dijkstra_times_same_line.append(dijkstra_time1)
     astar_times_same_line.append(astar_time1)
-    
-
     print(f"Pair: {labels_same_line[-1]}, Dijkstra Time: {dijkstra_time1:.6f}, A* Time: {astar_time1:.6f}")
 print("---------------------------------------------------------------------------------------------------")
 
@@ -431,13 +431,16 @@ station_pairs = [
 
 ]
 
-
+labels = []
+for start_id, end_id in station_pairs:
+    labels.append(f"{stations[start_id]['name']} to {stations[end_id]['name']}")
 line_changes_list = []
 print("Line Change Comparison between Dijkstra's and A* Algorithms:")
 print("---------------------------------------------------------------------------------------------------" )
 for (start_id, end_id), label in zip(station_pairs, labels):
-    _, dijkstra_path = dijkstra(graph, start_id, end_id)
+    _,dijkstra_path = dijkstra(graph, start_id, end_id)
     _, astar_path = A_Star(graph, start_id, end_id, heuristic)
+
    
     dijkstra_line_changes = count_line_changes(dijkstra_path, connections)
     astar_line_changes = count_line_changes(astar_path, connections)
@@ -445,5 +448,4 @@ for (start_id, end_id), label in zip(station_pairs, labels):
     line_changes_list.append((dijkstra_line_changes, astar_line_changes))
 
     print(f"Pair: {label}, Dijkstra Line Changes: {dijkstra_line_changes}, A* Line Changes: {astar_line_changes}")
-    
     
