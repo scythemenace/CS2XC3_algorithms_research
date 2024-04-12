@@ -31,7 +31,7 @@ class MinPriorityQueue:
 
     def _heapify_up(self, index):
         while index > 0 and self.heap[self.parent(index)] > self.heap[index]:
-            self.heap[index], self.heap[self.parent(index)] =self.heap[self.parent(index)], self.heap[index]
+            self.heap[index], self.heap[self.parent(index)] = self.heap[self.parent(index)], self.heap[index]
             index = self.parent(index)
 
     def _heapify_down(self, index):
@@ -252,5 +252,3 @@ distances, shortest_paths, previous = all_pairs_bellman_ford(graph)
 print("Shortest path from 0 to 4:", shortest_paths[(0, 3)])
 
 print("Distance from 0 to 4:", distances[(0, 3)])
-
-

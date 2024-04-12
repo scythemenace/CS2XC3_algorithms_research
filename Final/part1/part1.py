@@ -24,7 +24,7 @@ class MinPriorityQueue:
 
     def delete_min(self):
         if len(self.heap) == 0:
-            return None  # Handle empty queue case
+            return None
 
         self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
         min_val = self.heap.pop()
@@ -102,7 +102,7 @@ class Graph:
         counts = [0] * self.size
 
         pq = MinPriorityQueue()
-        pq.insert((0, start_vertex))  # Insert (distance, vertex)
+        pq.insert((0, start_vertex))
 
         while not pq.empty():  
             current_distance, u = pq.delete_min()
@@ -122,7 +122,6 @@ class Graph:
                         pq.insert((alt, v))
 
         return distances, paths
-
     
     def bellman_ford(self, start_vertex_data, k):
         start_vertex = self.vertex_data.index(start_vertex_data)
@@ -143,12 +142,11 @@ class Graph:
         # Negative cycle detection
         for u in range(self.size):
             for v in range(self.size):
-                if self.adj_matrix[u][v] != 0:
+                if self.adj_matrix[u][v] != 0 and counts[u] <= k:
                     if distances[u] + self.adj_matrix[u][v] < distances[v]:
                         raise ValueError("Graph contains a negative cycle")
                     
         return distances, paths
-
 
 """
 Running a very basic test in order to check if Dijkstra's and Bellman Ford algorithms are working as expected.
@@ -156,8 +154,7 @@ Below is the first test which is a basic test to check if the algorithms show th
 this for an undirected graph.
 """
 
-
-my_graph = Graph(5)  # Create a graph with 5 vertices
+my_graph = Graph(5, True)  # Create a graph with 5 vertices
 
 my_graph.add_vertex_data(0, "City A")
 my_graph.add_vertex_data(1, "City B")
@@ -171,7 +168,6 @@ my_graph.add_edge(1, 3, 3)   # Edge: City B to City D, distance 3
 my_graph.add_edge(2, 3, 8)   # Edge: City C to City D, distance 8
 my_graph.add_edge(2, 4, 2)   # Edge: City C to City E, distance 2
 my_graph.add_edge(4, 3, 6)   # Edge: City E to City D, distance 6
-
 
 # Find shortest paths from City A with up-to 2 relaxations allowed
 distances_1_d, paths_1_d = my_graph.dijkstra("City A", 2) 
@@ -193,7 +189,6 @@ print("\nShortest paths from City A using Bellman-Ford:")
 for vertex, path in paths_1_bf.items():
     print(f"To {my_graph.vertex_data[vertex]}: {' -> '.join(path)}")
 
-
 """
 Now we need to check if the algorithms works as intended for negative weights. We'll create a graph with negative weights and check
 that Dijkstra's fails and Bellman Ford works as intended. We've created a graph which gives it longer path which eventually has 
@@ -209,7 +204,6 @@ You'll see in the test below Dijkstra's fails to give the shortest path and choo
 chooses A -> B -> C -> D which has weight 2 because even though initially it has weight 5, it has a negative weight of -4 which makes
 it 1 and then finally the additional wieght of 1 from C -> D makes it 2.
 """
-
 
 graph = Graph(4, True)
 
@@ -244,7 +238,6 @@ print("\nShortest paths from vertex A using Bellman Ford in example 2:")
 for vertex, path in paths_2_bf.items():
     print(f"To {graph.vertex_data[vertex]}: {' -> '.join(path)}")
 
-
 """
 Now we need to check if the algorithms works as intended for cyclic negative graph. We'll create a graph with negative weights and which is cyclic.
 Bellman Ford should raise an error whenever that happens
@@ -277,7 +270,6 @@ which makes the distance as -3
 
 Therefore, we choose to return nothing, which is [] and {} for distances and paths respectively.
 """
-
 
 g = Graph(5, directed=True)
 
@@ -313,7 +305,6 @@ try:
 except ValueError as e:
     print(e)
 
-
 """
 After printing everything, it seems all our basic experimentation was passed successfully. Now we need to test the algorithms on a larger
 scale to see how they perform.
@@ -323,8 +314,7 @@ Let's test the algorithms based on their time taken for three different variable
 3. Graph density
 """
 
-
-def generate_random_graph(size, density, directed=False, negative_weights=False):
+def generate_random_graph(size, density, directed=True, negative_weights=False):
     if density < 0 or density > 1:
         raise ValueError("Density must be between 0 and 1.")
     
@@ -350,14 +340,12 @@ def generate_random_graph(size, density, directed=False, negative_weights=False)
 
     return graph
 
-
 """
 #Testing if it works as needed
 size = 5
 density = 0.8
-directed = False  # Set to True for a directed graph
 
-random_graph = generate_random_graph(size, density, directed, negative_weights=True)
+random_graph = generate_random_graph(size, density, negative_weights=True)
 
 # Print out the adjacency matrix
 for row in random_graph.adj_matrix:
@@ -365,7 +353,6 @@ for row in random_graph.adj_matrix:
 
 #Note that the diagonals will always be 0 even thought density is 1 because we're not allowing self loops
 """
-
 
 def time_algorithm(graph, source, algorithm='d', relaxation_limit=3):
     if algorithm.lower() == 'd':
@@ -377,7 +364,6 @@ def time_algorithm(graph, source, algorithm='d', relaxation_limit=3):
     graph.bellman_ford(source, k=relaxation_limit)
     end_time = time.time()
     return end_time - start_time
-
 
 # Experiment 1: Variable Graph Size
 graph_sizes = range(5, 100, 10)  # Graph sizes to test
@@ -412,17 +398,16 @@ plt.show()
 
 #Only Bellman Ford
 plt.figure(figsize=(10, 6))
-plt.plot(graph_sizes, bellman_ford_times, label='Dijkstra')
+plt.plot(graph_sizes, bellman_ford_times, label='Bellman-Ford')
 plt.xlabel('Graph Size')
 plt.ylabel('Time (seconds)')
 plt.title('Time Complexity: Graph Size Variation for Bellman Ford only')
 plt.legend()
 plt.show()
 
-
 # Experiment 2: Variable Density
 graph_size = 50  # Fixed graph size
-densities = [i / 10 for i in range(1, 10)]  # Densities to test
+densities = [i / 10 for i in range(10, 0, -1)]  # Densities to test
 
 dijkstra_times = []
 bellman_ford_times = []
@@ -454,7 +439,7 @@ plt.show()
 
 #Only Bellman Ford
 plt.figure(figsize=(10, 6))
-plt.plot(densities, bellman_ford_times, label='Dijkstra')
+plt.plot(densities, bellman_ford_times, label='Bellman-Ford')
 plt.xlabel('Density')
 plt.ylabel('Time (seconds)')
 plt.title('Time Complexity: Density Variation for Bellman Ford only')
@@ -464,7 +449,7 @@ plt.show()
 #Experiment 3: Variable Relaxation Limit
 graph_size = 50  # Fixed graph size
 density = 0.5  # Fixed density
-relaxations = range(1, 10)  # Relaxations to test
+relaxations = [i for i in range(1, 11)]  # Relaxations to test
 
 dijkstra_times = []
 bellman_ford_times = []
@@ -474,7 +459,7 @@ for k in relaxations:
     source = random.choice(graph.vertex_data)  # Random source
 
     dijkstra_times.append(time_algorithm(graph, source, 'd', k))
-    bellman_ford_times.append(time_algorithm(graph, source, 'b', 10))
+    bellman_ford_times.append(time_algorithm(graph, source, 'b', k))
 
 plt.figure(figsize=(10, 6))
 plt.plot(relaxations, dijkstra_times, label='Dijkstra')
@@ -496,7 +481,7 @@ plt.show()
 
 #Only Bellman Ford
 plt.figure(figsize=(10, 6))
-plt.plot(relaxations, bellman_ford_times, label='Dijkstra')
+plt.plot(relaxations, bellman_ford_times, label='Bellman-Ford')
 plt.xlabel('Relaxation Limits')
 plt.ylabel('Time (seconds)')
 plt.title('Time Complexity: Relaxation Limit Variation for Bellman Ford only')
@@ -510,6 +495,7 @@ We'll find the distance from before and after the relaxation limit and check if 
 We'll create a normal Dijkstra's and a normal Bellman Ford without k limitations. Then we'll compare the results of the two algorithms
 for the same source and check how close the distances are for the same source.
 """
+
 def dijkstra_without_restriction(graph, start_vertex_data):
     start_vertex = graph.vertex_data.index(start_vertex_data)
     distances = [float('inf')] * graph.size
@@ -577,100 +563,43 @@ def bellman_ford_without_restriction(graph, start_vertex_data):
 
 def measure_accuracy(graph, source, algorithm, relaxation_limit=4):
     if algorithm == 'dijkstra':
-        distances, paths = graph.dijkstra(source, k=relaxation_limit)
-        unrestricted_distances, unrestricted_paths = dijkstra_without_restriction(graph, source)
+        distances, _ = graph.dijkstra(source, k=relaxation_limit)
+        unrestricted_distances, _ = dijkstra_without_restriction(graph, source)
+
     elif algorithm == 'bellman_ford':
-        distances, paths = graph.bellman_ford(source, k=relaxation_limit)
-        unrestricted_distances, unrestricted_paths = bellman_ford_without_restriction(graph, source)
+        distances, _ = graph.bellman_ford(source, k=relaxation_limit)
+        unrestricted_distances, _ = bellman_ford_without_restriction(graph, source)
     else:
         return None 
 
     distance_error_sum = 0
-    path_matches = 0
 
     for i in range(len(distances)):
         distance_error_sum += abs(distances[i] - unrestricted_distances[i])
-        if paths[i] == unrestricted_paths[i]:
-            path_matches += 1
 
-    average_distance_error = distance_error_sum / len(distances)
-    path_accuracy = path_matches / len(distances) * 100
+    return distance_error_sum
 
-    #We return distance error as well in case we want to do some more testing but we won't plot it. We'll only plot path accuracy for now.
-    return average_distance_error, path_accuracy 
-
-#Experiment 1: Variable Graph Size
-graph_sizes = range(5, 101, 5)  
-density = 0.5  
-relaxation_limit = 5  
-
-dijkstra_accuracies = [] 
-bellman_ford_accuracies = []
-
-for size in graph_sizes:
-    graph = generate_random_graph(size, density)
-    source = random.choice(graph.vertex_data)
-
-    dijkstra_accuracies.append(measure_accuracy(graph, source, 'dijkstra', relaxation_limit))
-    bellman_ford_accuracies.append(measure_accuracy(graph, source, 'bellman_ford', relaxation_limit))
-
-
-# Plotting code 
-plt.figure(figsize=(10, 6))
-plt.plot(graph_sizes, dijkstra_accuracies, label='Dijkstra')
-plt.plot(graph_sizes, bellman_ford_accuracies, label='Bellman-Ford')
-plt.xlabel('Graph Size')
-plt.ylabel('Path Accuracy (%)')
-plt.title("Experiment 1: Path Accuracy vs. Graph Size")
-plt.legend()
-plt.show()
-
-#Experiment 2: Variable Density
+#Experiment: Check the accuracy of the algorithms
 graph_sizes = 50
-density = [i / 10 for i in range(1, 10)]
-relaxation_limit = 5  
+density = 0.5
+relaxation_limit = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 dijkstra_accuracies = [] 
 bellman_ford_accuracies = []
 
-for density in densities:
-    graph = generate_random_graph(size, density)
-    source = random.choice(graph.vertex_data)
-
-    dijkstra_accuracies.append(measure_accuracy(graph, source, 'dijkstra', relaxation_limit))
-    bellman_ford_accuracies.append(measure_accuracy(graph, source, 'bellman_ford', relaxation_limit))
-
-# Plotting code 
-plt.figure(figsize=(10, 6))
-plt.plot(densities, dijkstra_accuracies, label='Dijkstra')
-plt.plot(densities, bellman_ford_accuracies, label='Bellman-Ford')
-plt.xlabel('Densities')
-plt.ylabel('Path Accuracy (%)')
-plt.title("Experiment 2: Path Accuracy vs. Densities")
-plt.legend()
-plt.show()
-
-#Experiment 3: Variable Relaxation Limit
-graph_sizes = 50
-density = 0.6
-relaxations = range(1, 10)
-dijkstra_accuracies = [] 
-bellman_ford_accuracies = []
 graph = generate_random_graph(size, density)
 
-for k in relaxations:
+for k in relaxation_limit:
     source = random.choice(graph.vertex_data)
-
     dijkstra_accuracies.append(measure_accuracy(graph, source, 'dijkstra', k))
     bellman_ford_accuracies.append(measure_accuracy(graph, source, 'bellman_ford', k))
 
 # Plotting code 
 plt.figure(figsize=(10, 6))
-plt.plot(relaxations, dijkstra_accuracies, label='Dijkstra')
-plt.plot(relaxations, bellman_ford_accuracies, label='Bellman-Ford')
-plt.xlabel('Relaxation Limit')
-plt.ylabel('Path Accuracy (%)')
-plt.title("Experiment 2: Path Accuracy vs. Relaxation Limit")
+plt.plot(relaxation_limit, dijkstra_accuracies, label='Dijkstra')
+plt.plot(relaxation_limit, bellman_ford_accuracies, label='Bellman-Ford')
+plt.xlabel('Relaxation Limits')
+plt.ylabel('Difference in distance')
+plt.title("Experiment 2: Difference in distance vs. Relaxation Limits")
 plt.legend()
-plt.show()
 plt.show()
