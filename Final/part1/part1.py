@@ -360,6 +360,7 @@ def time_algorithm(graph, source, algorithm='d', relaxation_limit=3):
         graph.dijkstra(source, k=relaxation_limit)
         end_time = time.time()
         return end_time - start_time
+
     start_time = time.time()
     graph.bellman_ford(source, k=relaxation_limit)
     end_time = time.time()
@@ -579,14 +580,14 @@ def measure_accuracy(graph, source, algorithm, relaxation_limit=4):
     return distance_error_sum
 
 #Experiment: Check the accuracy of the algorithms
-graph_sizes = 100
+graph_size = 100
 density = 0.5
 relaxation_limit = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 dijkstra_accuracies = [] 
 bellman_ford_accuracies = []
 
-graph = generate_random_graph(size, density)
+graph = generate_random_graph(graph_size, density)
 
 for k in relaxation_limit:
     source = random.choice(graph.vertex_data)
