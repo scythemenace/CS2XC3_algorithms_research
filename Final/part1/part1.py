@@ -144,7 +144,7 @@ class Graph:
             for v in range(self.size):
                 if self.adj_matrix[u][v] != 0 and counts[u] <= k:
                     if distances[u] + self.adj_matrix[u][v] < distances[v]:
-                        raise ValueError("Graph contains a negative cycle")
+                        return [], {}
                     
         return distances, paths
 
@@ -373,8 +373,7 @@ bellman_ford_times = []
 
 for size in graph_sizes:
     graph = generate_random_graph(size, density)
-    source = random.choice(graph.vertex_data)  # Random source
-
+    source = random.choice(graph.vertex_data)
     dijkstra_times.append(time_algorithm(graph, source, 'd', 4))
     bellman_ford_times.append(time_algorithm(graph, source, 'b', 4))
 
@@ -407,7 +406,7 @@ plt.show()
 
 # Experiment 2: Variable Density
 graph_size = 50  # Fixed graph size
-densities = [i / 10 for i in range(10, 0, -1)]  # Densities to test
+densities = [i/10 for i in range(10, 0, -1)]  # Densities to test
 
 dijkstra_times = []
 bellman_ford_times = []
@@ -449,7 +448,7 @@ plt.show()
 #Experiment 3: Variable Relaxation Limit
 graph_size = 50  # Fixed graph size
 density = 0.5  # Fixed density
-relaxations = [i for i in range(1, 11)]  # Relaxations to test
+relaxations = [i for i in range(10, 0, -1)]  # Relaxations to test
 
 dijkstra_times = []
 bellman_ford_times = []
@@ -580,7 +579,7 @@ def measure_accuracy(graph, source, algorithm, relaxation_limit=4):
     return distance_error_sum
 
 #Experiment: Check the accuracy of the algorithms
-graph_sizes = 50
+graph_sizes = 100
 density = 0.5
 relaxation_limit = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
