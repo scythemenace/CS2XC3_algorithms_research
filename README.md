@@ -17,4 +17,4 @@ This repository contains implementations, analyses, and modifications of core al
 * Code examples are located in appropriate folder names.
 * Analysis and discussions are provided either in the .ipynb or analaysis pdf separately in the same folder.
 ### Contributions
-This repository is open to contributions and improvements. Since we were researching and learning about certain concepts for the course it's not perfect or error proof. If you have suggestions or find areas where the explanations and implementations can be enhanced, please feel free to open an issue, submit a pull request or reach out to pankur216@gmail.com or 
+This repository is open to contributions and improvements. Since we were researching and learning about certain concepts for the course it's not perfect or error proof. If you have suggestions or find areas where the explanations and implementations can be enhanced, please feel free to open an issue, submit a pull request or reach out to pankur216@gmail.com, aaravpant00@gmail.com or joshimegh2004@gmail.com
