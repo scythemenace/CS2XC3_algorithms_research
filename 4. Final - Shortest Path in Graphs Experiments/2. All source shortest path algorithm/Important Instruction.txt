@@ -1,0 +1,1 @@
+We weren't allowed to use Floyd Warshall for this. We were supposed to write two functions which  use the Dijkstra's algorithm and Bellman-Ford's algorithm and make them act as an all source algorithm for positive(dijkstra) and negative(bellman-ford) graphs.
