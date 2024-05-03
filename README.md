@@ -16,5 +16,13 @@ This repository contains implementations, analyses, and modifications of core al
 * Clone the repository
 * Code examples are located in appropriate folder names.
 * Analysis and discussions are provided either in the .ipynb or analaysis pdf separately in the same folder.
+* Each **Lab** folder **may** have a code_experiment, converted_pdf_of_results and an instructions file.
+  * code_experiment refers to the .ipynb file where the experiments were created and stored.
+  * converted_pdf_of_results is the pdf counterpart of .ipynb files. For people who are not able to view .ipynb files on browser can open them.
+  * instructions file, as the name says, showcases what instructions we were supposed to follow when designing the experiments.
+* For the Final folder, we were supposed to design detailed experiments about Shortest Path algorithms.
+  * The "Instructions for experiments" file showcases the instructions given to us based on which we had to design the experiments.
+  * The "Explanation Report" file has detailed documentation of experiment goals, outcomes, and reflections.
+  * If a particular experiment requires explanation of a specific rubric we were required to follow, there will be a .txt file inside that specific experiment folder.
 ### Contributions
 This repository is open to contributions and improvements. Since we were researching and learning about certain concepts for the course it's not perfect or error proof. If you have suggestions or find areas where the explanations and implementations can be enhanced, please feel free to open an issue, submit a pull request or reach out to pankur216@gmail.com, aaravpant00@gmail.com or joshimegh2004@gmail.com
