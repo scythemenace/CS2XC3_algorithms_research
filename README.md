@@ -2,7 +2,7 @@
 ### Overview
 This repository contains implementations, analyses, and modifications of core algorithms and data structures covered in the CS2XC3 course. The project delves into the inner workings of fundamental concepts and explores how algorithmic behavior changes under constraints or when adapted for specific use cases.
 ### Key Explorations
-* Graph Algorithms: Implementations of Dijkstra's algorithm, Bellman-Ford, Floyd-Warshall, A^*^, etc. with an emphasis on understanding their use cases and handling different input scenarios (e.g., negative weights).
+* Graph Algorithms: Implementations of Dijkstra's algorithm, Bellman-Ford, Floyd-Warshall, A<sup>*</sup>, etc. with an emphasis on understanding their use cases and handling different input scenarios (e.g., negative weights).
 * Data Structures: Examinations of stacks, queues, trees, etc., and how design choices affect their performance characteristics.
 * Sorting and searching algorithm: Comparing their speeds with respect to each other by plotting the results.
 * Algorithm Adaptations: Investigations into modifications of standard algorithms to handle specific constraints or to optimize for certain inputs.
